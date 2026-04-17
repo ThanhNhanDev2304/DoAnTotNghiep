@@ -12,7 +12,7 @@ export class RoleService {
 
   async create(createRoleDto: CreateRoleDto) {
     try {
-      const newRole = await this.prisma.client.role.create({
+      const newRole = await this.prisma.role.create({
         data: createRoleDto,
       });
       // Transform to Entity instance (for @Expose() and @Type() to work)
@@ -30,7 +30,7 @@ export class RoleService {
 
   async findAll() {
     try {
-      const roles = await this.prisma.client.role.findMany({
+      const roles = await this.prisma.role.findMany({
         include: { users: true },
       });
       // Transform to Entity instances (for @Expose() and @Exclude() to work)
@@ -42,7 +42,7 @@ export class RoleService {
 
   async findOne(id: string) {
     try {
-      const role = await this.prisma.client.role.findUnique({
+      const role = await this.prisma.role.findUnique({
         where: { id },
         include: { users: true },
       });
@@ -60,7 +60,7 @@ export class RoleService {
 
   async update(id: string, updateRoleDto: UpdateRoleDto) {
     try {
-      const role = await this.prisma.client.role.findUnique({
+      const role = await this.prisma.role.findUnique({
         where: { id },
       });
       if (!role) {
@@ -68,7 +68,7 @@ export class RoleService {
       }
 
       if (updateRoleDto.name && updateRoleDto.name !== role.name) {
-        const existingRole = await this.prisma.client.role.findUnique({
+        const existingRole = await this.prisma.role.findUnique({
           where: { name: updateRoleDto.name },
         });
         if (existingRole) {
@@ -76,7 +76,7 @@ export class RoleService {
         }
       }
 
-      const updatedRole = await this.prisma.client.role.update({
+      const updatedRole = await this.prisma.role.update({
         where: { id },
         data: updateRoleDto,
       });
@@ -91,7 +91,7 @@ export class RoleService {
 
   async remove(id: string): Promise<RoleEntity> {
     try {
-      const role = await this.prisma.client.role.findUnique({
+      const role = await this.prisma.role.findUnique({
         where: { id },
         include: { users: true },
       });
@@ -106,7 +106,7 @@ export class RoleService {
         );
       }
 
-      await this.prisma.client.role.delete({
+      await this.prisma.role.delete({
         where: { id },
       });
 

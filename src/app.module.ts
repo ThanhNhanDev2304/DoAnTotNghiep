@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
-import { UsersModule } from './users/users.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { SessionModule } from './session/session.module';
-import { RoleModule } from './role/role.module';
-import { SeedDbModule } from './seed-db/seed-db.module';
+import { UsersModule } from '@/users/users.module';
+import { PrismaModule } from '@/prisma/prisma.module';
+import { SessionModule } from '@/session/session.module';
+import { RoleModule } from '@/role/role.module';
+import { SeedDbModule } from '@/seed-db/seed-db.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -13,7 +13,9 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot({ isGlobal: true,
       envFilePath: '.env'
      }), // Load environment variables from .env file and make them globally available
-    UsersModule, PrismaModule, SessionModule, RoleModule, SeedDbModule ],
+    UsersModule, PrismaModule, SessionModule, RoleModule, 
+    SeedDbModule // Module to seed the database with initial data on application startup
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

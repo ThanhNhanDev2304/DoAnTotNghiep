@@ -1,0 +1,48 @@
+// prisma/schema.prisma
+// Define your database models
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Example models
+
+model User {
+  id    String     @id @default(uuid())
+  email String  @unique
+  name  String?
+  avatarUrl String?
+  backgroundUrl String?
+  description String?
+  password String
+  roleId String
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  sessions Session[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade) // 1 session belongs to 1 user
+  refreshToken String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id    String     @id @default(uuid())
+  name  String  @unique
+  description String?
+  users User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

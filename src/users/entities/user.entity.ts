@@ -1,19 +1,17 @@
 import { Exclude, Type } from 'class-transformer';
-import { IsEmail } from 'class-validator';
 
 export class UserEntity {
-  id!:    String;
+  id!: string;
+  email!: string;
+  name?: string;
+  avatarUrl?: string | null;
+  backgroundUrl?: string | null;
+  description?: string | null;
 
-  @IsEmail()
-  email!: String;
+  @Exclude() // Hide password from response
+  password!: string;
 
-  name!:  String;
-  avatarUrl!: String | null;
-  backgroundUrl!: String | null;
-  description!: String | null;
-
-  @Exclude()
-  password!: String;
+  roleId!: string;
 
   @Type(() => Date)
   createdAt!: Date;

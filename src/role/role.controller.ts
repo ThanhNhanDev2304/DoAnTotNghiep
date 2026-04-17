@@ -1,44 +1,53 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException } from '@nestjs/common';
-import { RoleService } from './role.service';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RoleService } from '@/role/role.service';
+import { CreateRoleDto } from '@/role/dto/create-role.dto';
+import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { RoleEntity } from '@/role/entities/role.entity';
 
+@ApiTags('roles')
 @Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
-  async create(@Body() createRoleDto: CreateRoleDto) {
-    try {
-      const newRole = await this.roleService.create(createRoleDto);
-      if (!newRole) {
-        throw new BadRequestException('Failed to create role');
-      }
-      return newRole;
-    } catch (error: any) {
-      console.error('Error creating role:', error);
-      throw new BadRequestException('Failed to create role: ' + error.message);
-    }
-    
+  @ApiOperation({ summary: 'Create a new role' })
+  @ApiResponse({ status: 201, description: 'Role created successfully', type: RoleEntity })
+  async create(@Body() createRoleDto: CreateRoleDto): Promise<{ message: string; result: RoleEntity }> {
+    const result = await this.roleService.create(createRoleDto);
+    return { message: 'Role created successfully', result };
   }
 
   @Get()
-  async findAll() {
-    return this.roleService.findAll();
+  @ApiOperation({ summary: 'Get all roles' })
+  @ApiResponse({ status: 200, description: 'Roles retrieved successfully', type: [RoleEntity] })
+  async findAll(): Promise<{ message: string; result: RoleEntity[] }> {
+    const result =  await this.roleService.findAll();
+    return { message: 'Roles retrieved successfully', result };
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.roleService.findOne(id);
+  @ApiOperation({ summary: 'Get a role by ID' })
+  @ApiResponse({ status: 200, description: 'Role retrieved successfully', type: RoleEntity })
+  async findOne(@Param('id') id: string): Promise<{ message: string; result: RoleEntity }> {
+     const result = await this.roleService.findOne(id);
+     return { message: 'Role retrieved successfully', result };
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.roleService.update(id, updateRoleDto);
+  @ApiOperation({ summary: 'Update a role' })
+  @ApiResponse({ status: 200, description: 'Role updated successfully', type: RoleEntity })
+  async update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto): Promise<{ message: string; result: RoleEntity }> {
+    const result = await this.roleService.update(id, updateRoleDto);
+    return { message: 'Role updated successfully', result };
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.roleService.remove(id);
+  @ApiOperation({ summary: 'Delete a role' })
+  @ApiResponse({ status: 200, description: 'Role deleted successfully', type: RoleEntity })
+  async remove(@Param('id') id: string): Promise<{ message: string; result: RoleEntity }> {
+    const result = await this.roleService.remove(id);
+    return { message: 'Role deleted successfully', result };
   }
 }
+ 

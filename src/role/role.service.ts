@@ -1,69 +1,121 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { CreateRoleDto } from '@/role/dto/create-role.dto';
+import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { RoleEntity } from '@/role/entities/role.entity';
 import { PrismaService } from '@/prisma/prisma.service';
-import { error } from 'console';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RoleService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async CheckRoleNameExists(name: string): Promise<boolean> {
-    const existingRole = await this.prisma.client.role.findUnique({
-      where: { name },
-    });
-    return !!existingRole; // Return true if role exists, false otherwise
-  }
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createRoleDto: CreateRoleDto) {
-    if (await this.CheckRoleNameExists(createRoleDto.name)) {
-      throw new BadRequestException('Role name already exists');
+    try {
+      const newRole = await this.prisma.client.role.create({
+        data: createRoleDto,
+      });
+      // Transform to Entity instance (for @Expose() and @Type() to work)
+      return plainToInstance(RoleEntity, newRole, { excludeExtraneousValues: false });
+    } catch (error: any) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException('Role name already exists');
+      }
+      throw new BadRequestException('Failed to create role: ' + error.message);
     }
-    const newRole = await this.prisma.client.role.create({
-      data: createRoleDto
-    });
-    if (!newRole) {
-      throw new error('Failed to create role');
-    }
-    return newRole;
   }
 
   async findAll() {
-    const roles = await this.prisma.client.role.findMany();
-    if (!roles) {
-      throw new error('Failed to retrieve roles');
+    try {
+      const roles = await this.prisma.client.role.findMany({
+        include: { users: true },
+      });
+      // Transform to Entity instances (for @Expose() and @Exclude() to work)
+      return roles.map(role => plainToInstance(RoleEntity, role, { excludeExtraneousValues: false }));
+    } catch (error: any) {
+      throw new BadRequestException('Failed to retrieve roles: ' + error.message);
     }
-    return roles;
   }
 
   async findOne(id: string) {
-    const role = await this.prisma.client.role.findUnique({
-      where: { id },
-    });
-    if (!role) {
-      throw new error('Role not found');
+    try {
+      const role = await this.prisma.client.role.findUnique({
+        where: { id },
+        include: { users: true },
+      });
+      if (!role) {
+        throw new NotFoundException(`Role with ID ${id} not found`);
+      }
+      return plainToInstance(RoleEntity, role, { excludeExtraneousValues: false });
+    } catch (error: any) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to retrieve role: ' + error.message);
     }
-    return role;
   }
 
   async update(id: string, updateRoleDto: UpdateRoleDto) {
-    const updatedRole = await this.prisma.client.role.update({
-      where: { id },
-      data: updateRoleDto,
-    });
-    if (!updatedRole) {
-      throw new error('Failed to update role');
+    try {
+      const role = await this.prisma.client.role.findUnique({
+        where: { id },
+      });
+      if (!role) {
+        throw new NotFoundException(`Role with ID ${id} not found`);
+      }
+
+      if (updateRoleDto.name && updateRoleDto.name !== role.name) {
+        const existingRole = await this.prisma.client.role.findUnique({
+          where: { name: updateRoleDto.name },
+        });
+        if (existingRole) {
+          throw new BadRequestException('Role name already exists');
+        }
+      }
+
+      const updatedRole = await this.prisma.client.role.update({
+        where: { id },
+        data: updateRoleDto,
+      });
+      return plainToInstance(RoleEntity, updatedRole, { excludeExtraneousValues: false });
+    } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to update role: ' + error.message);
     }
-    return updatedRole;
   }
 
-  async remove(id: string) {
-    const deletedRole = await this.prisma.client.role.delete({
-      where: { id },
-    });
-    if (!deletedRole) {
-      throw new error('Failed to delete role');
+  async remove(id: string): Promise<RoleEntity> {
+    try {
+      const role = await this.prisma.client.role.findUnique({
+        where: { id },
+        include: { users: true },
+      });
+
+      if (!role) {
+        throw new NotFoundException(`Role with ID ${id} not found`);
+      }
+
+      if (role.users && role.users.length > 0) {
+        throw new BadRequestException(
+          `Cannot delete role. It has ${role.users.length} user(s) assigned`,
+        );
+      }
+
+      await this.prisma.client.role.delete({
+        where: { id },
+      });
+
+      return plainToInstance(RoleEntity, role, { excludeExtraneousValues: false });
+    } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to delete role: ' + error.message);
     }
-    return deletedRole;
   }
 }

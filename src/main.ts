@@ -3,7 +3,7 @@ import { AppModule } from '@/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import ConfigSwagger from '@/lib/swagger/configSwagger';
-import { ValidationPipe, VersioningType, BadRequestException } from '@nestjs/common';
+import { ValidationPipe, VersioningType, BadRequestException, ClassSerializerInterceptor } from '@nestjs/common';
 
 async function bootstrap() {
   const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -19,6 +19,9 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: `${version}`,
   }); 
+
+  // Apply Global ClassSerializerInterceptor to use Entity classes for response transformation
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
   // Custom Validation Pipe with error formatting and automatic transformation
   app.useGlobalPipes(
@@ -41,8 +44,6 @@ async function bootstrap() {
       },
     }),
   );
-
-  // Apply Global Exception Filter
 
   await app.listen(process.env.PORT ?? 3000).then((app) => {
     console.log(`Application is running on: http://${configService.get<string>('HOST')}:${configService.get<number>('PORT')}/${globalPrefix}/v${version}`);

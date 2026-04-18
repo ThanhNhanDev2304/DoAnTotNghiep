@@ -9,5 +9,6 @@ import { PrismaModule } from '@/prisma/prisma.module';
   ],
   controllers: [RoleController],
   providers: [RoleService],
+  exports: [RoleService], // Export RoleService for use in other modules (e.g., UsersModule)
 })
 export class RoleModule {}

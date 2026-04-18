@@ -3,7 +3,7 @@ import { Exclude, Type } from 'class-transformer';
 export class UserEntity {
   id!: string;
   email!: string;
-  name?: string;
+  userName!: string;
 
   @Exclude() // Hide password from response
   password!: string;
@@ -11,8 +11,6 @@ export class UserEntity {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
   description?: string | null;
-
-  
 
   roleId!: string;
 

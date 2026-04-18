@@ -1,4 +1,9 @@
  export const roles = [
-      { roleName: "ADMIN", description: 'Administrator with full access' },
-      { roleName: "USER", description: 'Regular user with limited access' },
+      { roleName: process.env.NAME_ROLE_ADMIN! || 'ADMIN', description: 'Administrator with full access' },
+      { roleName: process.env.NAME_ROLE_USER! || 'USER', description: 'Regular user with limited access' },
     ];
+
+export const users = [
+    { email: 'user@gmail.com', userName: 'User', password: process.env.DEFAULT_PASSWORD || '123456'},
+    { email: 'admin@gmail.com', userName: 'Admin', password: process.env.DEFAULT_PASSWORD || '123456'},
+];

@@ -10,13 +10,28 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 export class RoleService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(createRoleDto: CreateRoleDto) {
+  async findRoleIdByName(roleName: string): Promise<string | null> { // default this func are public 
+    try {
+      const role = await this.prisma.role.findUnique({
+        where: { roleName },
+      });
+      return role ? role.id : null;
+    }
+    catch (error: any) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new BadRequestException('Database error: ' + error.message);
+      }
+      throw new BadRequestException('Failed to find role: ' + error.message);
+    }
+  }
+
+  async create(createRoleDto: CreateRoleDto): Promise<RoleEntity> {
     try {
       const newRole = await this.prisma.role.create({
         data: createRoleDto,
       });
       // Transform to Entity instance (for @Expose() and @Type() to work)
-      return plainToInstance(RoleEntity, newRole, { excludeExtraneousValues: false });
+      return newRole ? plainToInstance(RoleEntity, newRole, { excludeExtraneousValues: false }) : new RoleEntity();
     } catch (error: any) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -28,7 +43,7 @@ export class RoleService {
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<RoleEntity[]> {
     try {
       const roles = await this.prisma.role.findMany({
         include: { users: true },
@@ -40,7 +55,7 @@ export class RoleService {
     }
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<RoleEntity> {
     try {
       const role = await this.prisma.role.findUnique({
         where: { id },
@@ -58,7 +73,7 @@ export class RoleService {
     }
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto) {
+  async update(id: string, updateRoleDto: UpdateRoleDto): Promise<RoleEntity> {
     try {
       const role = await this.prisma.role.findUnique({
         where: { id },

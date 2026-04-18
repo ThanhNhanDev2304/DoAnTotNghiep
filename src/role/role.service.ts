@@ -4,7 +4,7 @@ import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
 import { RoleEntity } from '@/role/entities/role.entity';
 import { PrismaService } from '@/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 @Injectable()
 export class RoleService {
@@ -21,7 +21,7 @@ export class RoleService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new BadRequestException('Role name already exists');
       }
       throw new BadRequestException('Failed to create role: ' + error.message);
@@ -67,9 +67,9 @@ export class RoleService {
         throw new NotFoundException(`Role with ID ${id} not found`);
       }
 
-      if (updateRoleDto.name && updateRoleDto.name !== role.name) {
+      if (updateRoleDto.roleName && updateRoleDto.roleName !== role.roleName) {
         const existingRole = await this.prisma.role.findUnique({
-          where: { name: updateRoleDto.name },
+          where: { roleName: updateRoleDto.roleName },
         });
         if (existingRole) {
           throw new BadRequestException('Role name already exists');

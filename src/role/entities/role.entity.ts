@@ -1,11 +1,11 @@
 import { Exclude, Type } from 'class-transformer';
 
 export class RoleEntity {
-//   @Expose() //if not using excludeExtraneousValues, this is not needed, but it's good practice to be explicit about what should be included in the response
+  //   @Expose() //if not using excludeExtraneousValues, this is not needed, but it's good practice to be explicit about what should be included in the response
   id!: string;
 
-//   @Expose() // if you want to include name in the response when excludeExtraneousValues is true
-  name!: string;
+  //   @Expose() // if you want to include name in the response when excludeExtraneousValues is true
+  roleName!: string;
 
   description?: string;
 

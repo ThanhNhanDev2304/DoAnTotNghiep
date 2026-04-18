@@ -32,7 +32,7 @@ export class SeedDbService implements OnModuleInit {
             
             // Log chi tiết từng role (optional)
             for (const role of roles) {
-                this.logger.debug(`Seeded role: ${role.name}`);
+                this.logger.debug(`Seeded role: ${role.roleName}`);
             }
         } catch (error: any) {
             this.logger.error(`Error seeding roles: ${error.message}`);

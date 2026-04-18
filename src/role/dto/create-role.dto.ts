@@ -7,7 +7,7 @@ export class CreateRoleDto {
     @IsString({ message: 'Name must be a string' })
     @MaxLength(50, { message: 'Name must be at most 50 characters' })
     @MinLength(2, { message: 'Name must be at least 2 characters' })
-    name!: string;
+    roleName!: string;
 
     @ApiProperty({ description: 'The description of the role', example: 'Administrator role with full access' })
     @IsOptional({ message: 'Description is optional' })

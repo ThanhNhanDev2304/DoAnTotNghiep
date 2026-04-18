@@ -7,6 +7,7 @@ import { SessionModule } from '@/session/session.module';
 import { RoleModule } from '@/role/role.module';
 import { SeedDbModule } from '@/seed-db/seed-db.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { ConfigModule } from '@nestjs/config';
       envFilePath: '.env'
      }), // Load environment variables from .env file and make them globally available
     UsersModule, PrismaModule, SessionModule, RoleModule, 
-    SeedDbModule // Module to seed the database with initial data on application startup
+    SeedDbModule, AuthModule // Module to seed the database with initial data on application startup
   ],
   controllers: [AppController],
   providers: [AppService],

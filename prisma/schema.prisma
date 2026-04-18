@@ -17,7 +17,7 @@ datasource db {
 model User {
   id    String     @id @default(uuid())
   email String  @unique
-  name  String?
+  userName  String?
   avatarUrl String?
   backgroundUrl String?
   description String?
@@ -41,7 +41,7 @@ model Session {
 
 model Role {
   id    String     @id @default(uuid())
-  name  String  @unique
+  roleName  String  @unique
   description String?
   users User[]
   createdAt DateTime @default(now())

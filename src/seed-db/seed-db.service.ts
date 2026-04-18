@@ -53,7 +53,6 @@ export class SeedDbService implements OnModuleInit {
     async seed() {
         try {
             this.logger.log('Starting database seeding...');
-            
             // Seed theo thứ tự dependency
             await this.seedRoles();
             await this.seedUsers();
@@ -80,9 +79,9 @@ export class SeedDbService implements OnModuleInit {
     }
 
     async onModuleInit() {
-        const shouldSeed = this.configService.get<boolean>('SEED_DB') === true;
-        const shouldClear = this.configService.get<boolean>('CLEAR_DB') === false;
-        
+        const shouldSeed = this.configService.get<string>('SEED_DB') === 'true';
+        const shouldClear = this.configService.get<string>('CLEAR_DB') === 'false' ? false : true; // Mặc định là true nếu không có biến môi trường CLEAR_DB hoặc nếu CLEAR_DB không phải 'false'
+
         // Log cấu hình
         this.logger.log(`SEED_DB: ${shouldSeed}, CLEAR_DB: ${shouldClear}`);
         
@@ -90,12 +89,13 @@ export class SeedDbService implements OnModuleInit {
             try {
                 if (shouldClear) {
                     await this.clear();
+                    this.logger.log('Database cleared before seeding.');
                 }
                 await this.seed();
             } catch (error: any) {
                 this.logger.error(`Seeding failed: ${error.message}`);
                 // Có thể throw error để app không start nếu seed thất bại
-                // throw error;
+                throw error;
             }
         } else {
             this.logger.log('SEED_DB is not enabled. Skipping database seeding.');

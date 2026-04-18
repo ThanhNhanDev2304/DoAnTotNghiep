@@ -1,25 +1,20 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import * as pg from 'pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-    private readonly logger = new Logger(PrismaService.name);
-
-    constructor() {
-        const connectionString = process.env.DATABASE_URL;
-        
-        if (!connectionString) {
-            throw new Error('DATABASE_URL is not defined');
+    constructor(
+        private readonly configService: ConfigService
+     ) {
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+        if (!databaseUrl) {
+            throw new Error('DATABASE_URL environment variable is not set. Please set it to your Prisma Data API URL !!!');
         }
-
-        const pool = new pg.Pool({ connectionString }); // Tạo pool kết nối PostgreSQL
-        const adapter = new PrismaPg(pool); // Tạo adapter Prisma với pool kết nối
-        
-        // Gọi super với adapter
-        super({ adapter });
+        super({ accelerateUrl: databaseUrl });
     }
+    
+    private readonly logger = new Logger(PrismaService.name);
 
     async onModuleInit() {
         try {

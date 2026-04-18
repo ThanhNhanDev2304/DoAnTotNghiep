@@ -96,3 +96,167 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+# `The library materials used for this project are below.`
+
+## 1 Use Prisma/client with DB on Cloud [console.prisma.io](https://console.prisma.io/) for NestJS
+
+```bash
+  npm install @prisma/client
+  npx prisma init
+```
+- After installing and setting up Prisma, we proceed to retrieve the DATABASE_URL from this [page](https://console.prisma.io).
+- Write the table structure for the database in the schema.prisma file, and then run the command below to generate the client code.
+```bash
+  npx prisma generate
+```
+
+- Now we create resources for the nest with services and modules using the command below.
+```bash
+  nest g module prisma
+  nest g service prisma
+```
+- It will create two files, `prisma.module.ts` and `prisma.service.ts`, inside the prisma directory.
+- In the `prisma.module.ts` file, write it according to the following structure below.
+```bash
+  import { Global, Module } from '@nestjs/common';
+  import { PrismaService } from '@/prisma/prisma.service';
+
+  @Global() // Make PrismaModule global so that PrismaService can be injected anywhere without needing to import PrismaModule
+  @Module({
+    imports: [],
+    providers: [PrismaService],
+    exports: [PrismaService], // Export PrismaService so it can be used in other modules that import PrismaModule
+  })
+  export class PrismaModule {}
+```
+- And the file `prisma.service.ts` is also written as follows.
+```bash
+  import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+  import { ConfigService } from '@nestjs/config';
+  import {  } from '@prisma/client';
+  import { PrismaClient } from '@prisma/client';
+
+  @Injectable()
+  export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+      constructor(
+          private readonly configService: ConfigService
+      ) {
+          const databaseUrl = configService.get<string>('DATABASE_URL');
+          if (!databaseUrl) {
+              throw new Error('DATABASE_URL environment variable is not set. Please set it to your Prisma Data API URL !!!');
+          }
+          super({ accelerateUrl: databaseUrl });
+      }
+      
+      private readonly logger = new Logger(PrismaService.name);
+
+      async onModuleInit() {
+          try {
+              await this.$connect();
+              this.logger.log('✅ Prisma connected to PostgreSQL successfully');
+          } catch (error: any) {
+              this.logger.error('❌ Prisma connection failed:', error);
+              throw error;
+          }
+      }
+
+      async onModuleDestroy() {
+          await this.$disconnect();
+          this.logger.log('✅ Prisma disconnected from PostgreSQL');
+      }
+  }
+```
+
+
+## 2 Configure Swagger OpenAPI Documentation, [see details here](https://docs.nestjs.com/openapi/introduction)
+- Swagger file configuration
+```bash
+  import { NestExpressApplication } from '@nestjs/platform-express';
+  import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+  //config swagger
+  export default class ConfigSwagger {
+      public static setup = (app: NestExpressApplication): void => {
+          const config = new DocumentBuilder()
+              .setTitle('ToDoList API')
+              .setDescription('The ToDoList API description')
+              .setVersion('1.0')
+              .addBearerAuth({
+                  type: 'http',
+                  scheme: 'Bearer',
+                  bearerFormat: 'JWT',
+                  in: 'header',
+              }, 'access-token')
+              .addSecurityRequirements('access-token')
+              .build();
+          const documentFactory = () => SwaggerModule.createDocument(app, config);
+          SwaggerModule.setup('swagger', app, documentFactory, { //route swagger http://localhost:3000/swagger
+              swaggerOptions: {
+                  persistAuthorization: true, //keep authorization token after refresh page and f5
+              },
+          });
+      }
+  }
+```
+- In the `main.ts` file, call the following function to use it.
+```bash
+  ConfigSwagger.setup(app);
+```
+
+## 3 `Validate` the data we need to load additional libraries (you can refer to [here](https://docs.nestjs.com/techniques/validation)):
+```bash
+  npm i --save class-validator class-transformer
+```
+- All details can be found [here](https://docs.nestjs.com/techniques/validation).
+- To use the library, you need to declare it in `main.ts` as shown in the example below and format the message for BadRequestException:
+```bash
+  app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true, //tự động loại bỏ các thuộc tính không được định nghĩa trong DTOs
+        forbidNonWhitelisted: true, //nếu có thuộc tính không được định nghĩa trong DTO thì sẽ ném ra lỗi
+        transform: true, //tự động chuyển đổi payload thành các instance của lớp DTO
+
+        exceptionFactory: (errors) => { // tuyến bố một factory để tạo ra lỗi tùy chỉnh khi validation thất bại
+          // Format validation errors
+          const formattedErrors = errors.map((error) => ({
+            field: error.property, // Tên của trường bị lỗi
+            messages: Object.values(error.constraints || {}), // Các thông báo lỗi liên quan đến trường đó
+          }));
+          throw new BadRequestException({ // Trả về một đối tượng lỗi có cấu trúc rõ ràng
+            statusCode: 400, // Mã lỗi HTTP
+            message: 'Validation failed', // Thông báo lỗi chung
+            errors: formattedErrors
+          });
+        },
+      }),
+    );
+```
+
+# 4 Add `debug` code to NestJS with visual code:
+- Create a `launch.json` file of the `visual code` and modify the components as shown below:
+```bash
+ "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Nest Debug",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "start:debug",
+                "--",
+                "--inspect-brk"
+            ],
+            "console": "integratedTerminal",
+            "restart": true,
+            "protocol": "auto",
+            "port": 9229,
+            "autoAttachChildProcesses": true
+        }
+    ]
+```
+
+
+

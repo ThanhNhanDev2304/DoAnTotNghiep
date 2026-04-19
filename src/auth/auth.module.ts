@@ -1,9 +1,41 @@
 import { Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthController } from '@/auth/auth.controller';
+import { AuthService } from '@/auth/auth.service';
+import { PassportModule } from '@nestjs/passport';
+import { UsersModule } from '@/users/users.module';
+import { SessionModule } from '@/session/session.module';
+import { RoleModule } from '@/role/role.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import ms from 'ms';
 
 @Module({
+  imports: [
+    PassportModule,
+    UsersModule,
+    SessionModule,
+    RoleModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_ACCESS_TOKEN_SECRET');
+        const expiresIn = configService.get<string>('JWT_ACCESS_EXPIRE');
+        if (!secret || !expiresIn) {
+          throw new Error('JWT secret or expiration configuration is missing in environment variables');
+        }
+        const expiresInMs: number = ms(expiresIn as ms.StringValue) / 1000; // Convert to seconds for JWT
+        return {
+          secret,
+          signOptions: {
+            expiresIn: expiresInMs
+          }
+        };
+      },
+      inject: [ConfigModule],
+    })
+  ],
   controllers: [AuthController],
-  providers: [AuthService]
+  providers: [AuthService],
+  exports: [AuthService]
 })
-export class AuthModule {}
+export class AuthModule { }

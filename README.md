@@ -234,7 +234,7 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
     );
 ```
 
-# 4 Add `debug` code to NestJS with visual code:
+## 4 Add `debug` code to NestJS with visual code:
 - Create a `launch.json` file of the `visual code` and modify the components as shown below:
 ```bash
  "configurations": [
@@ -257,6 +257,36 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
         }
     ]
 ```
+
+## 5 Set up authentication users for the [NestJS Passport](https://docs.nestjs.com/recipes/passport#authentication-requirements) library.
+
+- We will create a resource for authentication.
+```bash
+  nest g resource auth
+```
+
+- Create the file auth/`local-auth.guard.ts`
+```bash
+
+  import { Injectable } from '@nestjs/common';
+  import { AuthGuard } from '@nestjs/passport';
+
+  @Injectable()
+  export class LocalAuthGuard extends AuthGuard('local') {
+
+  }
+```
+
+- Install the lib Passport for Project
+```bash
+  npm install --save @nestjs/passport passport passport-local
+  npm install --save-dev @types/passport-local
+  npm install --save @nestjs/jwt passport-jwt
+  npm install --save-dev @types/passport-jwt
+  npm install --save ms
+  npm install --save-dev @types/ms
+```
+
 
 
 

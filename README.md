@@ -279,12 +279,8 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 - Install the lib Passport for Project
 ```bash
-  npm install --save @nestjs/passport passport passport-local
-  npm install --save-dev @types/passport-local
-  npm install --save @nestjs/jwt passport-jwt
-  npm install --save-dev @types/passport-jwt
-  npm install --save ms
-  npm install --save-dev @types/ms
+  npm install --save @nestjs/passport passport passport-local ms cookie-parser @nestjs/jwt passport-jwt
+  npm install --save-dev @types/passport-local @types/passport-jwt @types/ms @types/cookie-parser
 ```
 
 

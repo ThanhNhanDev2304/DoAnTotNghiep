@@ -31,7 +31,7 @@ import ms from 'ms';
           }
         };
       },
-      inject: [ConfigModule],
+      inject: [ConfigService], // Inject ConfigService to access environment variables
     })
   ],
   controllers: [AuthController],

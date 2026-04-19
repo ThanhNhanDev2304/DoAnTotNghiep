@@ -17,7 +17,7 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) {}
 
-  private async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string): Promise<boolean> {
+  async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string): Promise<boolean> {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -36,16 +36,17 @@ export class UsersService {
       if (await this.checkEmailOrUsernameExists(createUserDto.email, createUserDto.userName)) {
         throw new BadRequestException('Email or username already exists');
       }
-      const roleId: (string | null) = await this.roleService.findRoleIdByName(this.configService.get<string>('NAME_ROLE_USER') || 'USER');
+      const roleId: (string | null) = await this.roleService.findRoleIdByName(createUserDto.roleName || this.configService.get<string>('NAME_ROLE_USER') || 'USER');
       if (!roleId || roleId === null) {
         throw new BadRequestException('Role not found');
       }
       const saltRounds = parseInt(this.configService.get<string>('BCRYPT_SALT_ROUNDS') || '10', 10);
       const newUser = await this.prisma.user.create({
         data: {
-          ...createUserDto,
+          email: createUserDto.email,
+          userName: createUserDto.userName,
           roleId,
-          password: await generatePasswordHash(createUserDto.password, saltRounds),
+          password: await generatePasswordHash(createUserDto.password, saltRounds)
         },
       });
       return newUser ? plainToInstance(UserEntity, newUser, { excludeExtraneousValues: false }) : new UserEntity();

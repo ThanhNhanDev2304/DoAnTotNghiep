@@ -30,6 +30,17 @@ export class UsersService {
     return !!user; // Returns true if user exists, false otherwise
   }
 
+  async searchUserByEmailOrUsername(emailOrUserName: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: emailOrUserName },
+          { userName: emailOrUserName }
+        ]
+      }
+    });
+    return user ? user : null;
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     try {

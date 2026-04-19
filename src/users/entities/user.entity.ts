@@ -13,6 +13,7 @@ export class UserEntity {
   description?: string | null;
 
   roleId!: string;
+  roleName?: string | null;
 
   @Type(() => Date)
   createdAt!: Date;
@@ -21,4 +22,5 @@ export class UserEntity {
 
   @Exclude()
   sessions?: any[]; // Add sessions property to hold user sessions
+
 }

@@ -1,11 +1,12 @@
 import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
-import { RegisterDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '@/lib/passport/jwt-auth.guard';
 import { User } from '@/lib/decorator/user.decorator';
 import { UserEntity } from '@/users/entities/user.entity';
+import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -27,10 +28,14 @@ export class AuthController {
     }
 
     @Public()
-    @UseGuards(JwtAuthGuard) // Apply the JWT authentication guard to this route
+    @UseGuards(LocalAuthGuard) // Apply the local authentication guard to this route
     @Post('login')
-    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity) {
-        return await this.authService.login(user, res);
-
+    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto ) {
+        const result = await this.authService.login(user, res, loginDto);
+        return {
+            message: 'Login successful',
+            accessToken: result.accessToken,
+            user: result.user,
+        };
     }
 }

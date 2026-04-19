@@ -1,16 +1,17 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { SessionService } from '@/session/session.service';
 import { UsersService } from '@/users/users.service';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { comparePassword } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { UserEntity } from '@/users/entities/user.entity';
 import type { Response } from 'express';
 import ms from 'ms';
+import { CreateSessionDto } from '@/session/dto/create-session.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,9 +23,9 @@ export class AuthService {
         private readonly sessionService: SessionService
 
     ) { }
-    private readonly refresh_token: string = "";
+    private readonly refresh_token: string = "refresh_token";
 
-    private async generateRefreshToken(payload: { userId: string; _sub: string }) {
+    private async generateRefreshToken(payload: { userId: string; _sub: string, deviceId: string }): Promise<string> {
         const expiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRE');
         const secret = this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET');
         if (!expiresIn || !secret) {
@@ -57,15 +58,43 @@ export class AuthService {
                 roleName: this.configService.get<string>('NAME_ROLE_USER') || 'USER'
             };
             const result = await this.usersService.create(CreateUserDto);
-            console.log('Registered user:', result);
             return result;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error registering user:', error);
-            throw error;
+            throw new BadRequestException('Failed to register user', error.message);
         }
     }
 
-    async login(user: UserEntity, res: Response) {
-        
+    async login(user: UserEntity, res: Response, loginDto: LoginDto) {
+        const refreshToken = await this.generateRefreshToken({ userId: user.id, _sub: user.roleName || user.email, deviceId: loginDto.deviceId });
+        const createSessionDto: CreateSessionDto = {
+            userId: user.id,
+            refreshToken,
+            deviceId: loginDto.deviceId
+        };
+        const setSessionDB = await this.sessionService.upsertSession(createSessionDto);
+        if (!setSessionDB) {
+            throw new BadRequestException('Failed to create or update session in database');
+        }
+        const expiresInRefreshToken = this.configService.get<string>('JWT_REFRESH_EXPIRE');
+        if (!expiresInRefreshToken) {
+            throw new Error('JWT refresh token expiration is not defined in environment variables');
+        }
+        res.cookie( this.refresh_token, refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            maxAge: ms(expiresInRefreshToken as ms.StringValue) // Set cookie expiration to match refresh token expiration
+        })
+        const payload: Omit<UserEntity, 'password'> = {
+            id: user.id,
+            email: user.email,
+            userName: user.userName,
+            roleId: user.roleId,
+            roleName: user.roleName,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        }
+        return { accessToken: this.jwtService.sign(payload), user: payload };
     }
 }

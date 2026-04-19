@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import ConfigSwagger from '@/lib/swagger/configSwagger';
 import { ValidationPipe, VersioningType, BadRequestException, ClassSerializerInterceptor } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { JwtAuthGuard } from './lib/passport/jwt-auth.guard';
 
 async function bootstrap() {
   const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -47,7 +48,7 @@ async function bootstrap() {
   );
 
   // You can add global guards here if needed when you call request handler, it will check if the route is public or not, if not it will check the token and validate it before calling the handler
-  // app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.useGlobalGuards(new JwtAuthGuard(reflector)); 
 
   // Add cookie-parser middleware to handle cookies in requests and responses, which is essential for managing refresh tokens stored in cookies.
   app.use(cookieParser());

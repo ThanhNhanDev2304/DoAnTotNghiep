@@ -74,16 +74,16 @@ export class SessionService {
     return session ? session : null;
   }
 
-  async deleteSessionByDeviceId(deviceId: string): Promise<boolean> {
-    const session = await this.prismaService.session.findUnique({
-      where: { deviceId },
+  async deleteSessionByDeviceId(userId: string, deviceId: string): Promise<boolean> {
+    const session = await this.prismaService.session.delete({
+      where: { 
+        deviceId,
+        userId
+       },
     });
     if (!session) {
       return false; // No session found with the given deviceId
     }
-    await this.prismaService.session.delete({
-      where: { deviceId },
-    });
     return true;
   }
 

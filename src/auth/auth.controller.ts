@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
 import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
@@ -63,4 +63,31 @@ export class AuthController {
         };
     }
 
+    @Get('profile')
+    async getProfile(@User() user: UserEntity) {
+        try {
+            return {
+            message: 'Profile retrieved successfully',
+            user: user,
+        };
+        } catch (error) {
+            throw new BadRequestException('Failed to retrieve profile', (error as Error).message);
+        }
+    }
+
+    @Post('logout')
+    async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request, @User() user: UserEntity) {
+        const oldCookieRefreshToken = req.cookies[this.refreshTokenName];
+        if (!oldCookieRefreshToken) {
+            throw new BadRequestException('Refresh token is missing in cookies');
+        }
+        const result: boolean = await this.authService.logout(user, oldCookieRefreshToken, res);
+        return { message: 'Logout successful', result };
+    }
+
+    @Post('logout-all')
+    async logoutAll(@Res({ passthrough: true }) res: Response, @User() user: UserEntity) {
+        const result: boolean = await this.authService.logoutAll(user, res);
+        return { message: 'All sessions logged out successfully', result };
+    }
 }

@@ -131,7 +131,7 @@ export class AuthService {
             if (!decodedRefreshToken || typeof decodedRefreshToken === 'string' || !decodedRefreshToken.userId || !decodedRefreshToken._sub || !decodedRefreshToken.deviceId) {
                 throw new BadRequestException('Invalid refresh token payload');
             }
-            const session = await this.sessionService.findSessionByRefreshTokenAndDeviceId(oldCookieRefreshToken,  decodedRefreshToken.deviceId);
+            const session = await this.sessionService.findSessionByRefreshTokenAndDeviceId(oldCookieRefreshToken, decodedRefreshToken.deviceId);
             if (!session) {
                 throw new BadRequestException('Invalid refresh token or session not found');
             }
@@ -144,6 +144,36 @@ export class AuthService {
             return await this.login(userEntity, res, decodedRefreshToken.deviceId); // Reuse login logic to generate new tokens and set cookie
         } catch (error: any) {
             throw new BadRequestException('Failed to refresh token', error.message);
+        }
+    }
+
+    async logout(user: UserEntity, oldCookieRefreshToken: string, res: Response): Promise<boolean> {
+        try {
+            const decodedRefreshToken = this.jwtService.verify(oldCookieRefreshToken, { secret: this.refreshTokenSecret });
+            if (!decodedRefreshToken || typeof decodedRefreshToken === 'string' || !decodedRefreshToken.userId || !decodedRefreshToken._sub || !decodedRefreshToken.deviceId) {
+                throw new BadRequestException('Invalid refresh token payload');
+            }
+            const result = await this.sessionService.deleteSessionByDeviceId(user.id, decodedRefreshToken.deviceId);
+            if (!result) {
+                throw new BadRequestException('Failed to delete session for the given device');
+            }
+            res.clearCookie(this.refreshTokenName); // Clear refresh token cookie on logout
+            return result;
+        } catch (error: any) {
+            throw new BadRequestException('Failed to logout user', error.message);
+        }
+    }
+
+    async logoutAll(user: UserEntity, res: Response): Promise<boolean> {
+        try {
+            const result = await this.sessionService.deleteSessionsByUserId(user.id);
+            if (!result) {
+                throw new BadRequestException('Failed to delete sessions for the given user');
+            }
+            res.clearCookie(this.refreshTokenName); // Clear refresh token cookie on logout
+            return result;
+        } catch (error: any) {
+            throw new BadRequestException('Failed to logout user from all sessions', error.message);
         }
     }
 }

@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import ConfigSwagger from '@/lib/swagger/configSwagger';
 import { ValidationPipe, VersioningType, BadRequestException, ClassSerializerInterceptor } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
-import { JwtAuthGuard } from './lib/passport/jwt-auth.guard';
+import { JwtAuthGuard } from '@/lib/passport/jwt-auth.guard';
 
 async function bootstrap() {
   const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(AppModule);

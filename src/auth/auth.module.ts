@@ -9,7 +9,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { LocalStrategy } from '@/auth/passport/local.strategy';
-import { JwtAuthGuard } from '@/lib/passport/jwt-auth.guard';
+import { JwtStrategy } from '@/auth/passport/jwt.strategy';
 
 @Module({
   imports: [
@@ -39,8 +39,8 @@ import { JwtAuthGuard } from '@/lib/passport/jwt-auth.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
-    LocalStrategy,
-    JwtAuthGuard
+    LocalStrategy, // Add LocalStrategy to providers so it can be used for validating user credentials during login
+    JwtStrategy, // Add JwtStrategy to providers so it can be used globally or in specific routes to protect them with JWT authentication
   ],
   exports: [AuthService]
 })

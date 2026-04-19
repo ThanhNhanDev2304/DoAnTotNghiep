@@ -283,6 +283,11 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
   npm install --save-dev @types/passport-local @types/passport-jwt @types/ms @types/cookie-parser
 ```
 
+- Add the following code to `main.ts`
+```bash
+    app.useGlobalGuards(new JwtAuthGuard(reflector)); 
+    app.use(cookieParser());
+```
 
 
 

@@ -86,14 +86,15 @@ export class AuthService {
             sameSite: 'strict',
             maxAge: ms(expiresInRefreshToken as ms.StringValue) // Set cookie expiration to match refresh token expiration
         })
-        const payload: Omit<UserEntity, 'password'> = {
+        const payload: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> = {
             id: user.id,
             email: user.email,
+            avatarUrl: user.avatarUrl,
+            backgroundUrl: user.backgroundUrl,
+            description: user.description,
             userName: user.userName,
             roleId: user.roleId,
-            roleName: user.roleName,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            roleName: user.roleName
         }
         return { accessToken: this.jwtService.sign(payload), user: payload };
     }

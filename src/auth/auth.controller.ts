@@ -3,7 +3,6 @@ import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
 import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
 import type { Response } from 'express';
-import { JwtAuthGuard } from '@/lib/passport/jwt-auth.guard';
 import { User } from '@/lib/decorator/user.decorator';
 import { UserEntity } from '@/users/entities/user.entity';
 import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
@@ -38,4 +37,6 @@ export class AuthController {
             user: result.user,
         };
     }
+
+
 }

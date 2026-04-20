@@ -7,6 +7,7 @@ import { User } from '@/lib/decorator/user.decorator';
 import { UserEntity } from '@/users/entities/user.entity';
 import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
 import { ConfigService } from '@nestjs/config';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +24,7 @@ export class AuthController {
     }
 
     @Public() // Mark this route as public, allowing access without JWT authentication.
+    @ApiOperation({ summary: 'Register a new user' }) // Add Swagger documentation for this endpoint
     @Post('register')
     async register(
         @Body() registerDto: RegisterDto,
@@ -37,6 +39,7 @@ export class AuthController {
 
     @Public()
     @UseGuards(LocalAuthGuard) // Apply the local authentication guard to this route
+    @ApiOperation({ summary: 'Login a user for a session and cookie management' }) // Add Swagger documentation for this endpoint
     @Post('login')
     async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto ) {
         const result = await this.authService.login(user, res, loginDto.deviceId);
@@ -49,6 +52,7 @@ export class AuthController {
 
 
     @Public()
+    @ApiOperation({ summary: 'Refresh access token using a valid refresh token stored in cookies' }) // Add Swagger documentation for this endpoint
     @Post('refresh')
     async refreshToken(@Res({ passthrough: true }) res: Response, @Req() req: Request ){
         const oldCookieRefreshToken = req.cookies[this.refreshTokenName];
@@ -64,6 +68,7 @@ export class AuthController {
     }
 
     @Get('profile')
+    @ApiOperation({ summary: 'Get the profile of the currently authenticated user' }) // Add Swagger documentation for this endpoint
     async getProfile(@User() user: UserEntity) {
         try {
             return {
@@ -76,6 +81,7 @@ export class AuthController {
     }
 
     @Post('logout')
+    @ApiOperation({ summary: 'Logout the currently authenticated user' }) // Add Swagger documentation for this endpoint
     async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request, @User() user: UserEntity) {
         const oldCookieRefreshToken = req.cookies[this.refreshTokenName];
         if (!oldCookieRefreshToken) {
@@ -86,6 +92,7 @@ export class AuthController {
     }
 
     @Post('logout-all')
+    @ApiOperation({ summary: 'Logout the currently authenticated user from all devices' }) // Add Swagger documentation for this endpoint
     async logoutAll(@Res({ passthrough: true }) res: Response, @User() user: UserEntity) {
         const result: boolean = await this.authService.logoutAll(user, res);
         return { message: 'All sessions logged out successfully', result };

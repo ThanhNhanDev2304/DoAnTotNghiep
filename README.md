@@ -169,6 +169,12 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
   }
 ```
 
+- If you want to connect PostgreSQL with DBeaver, follow the instructions below:
+  ### - 1: After obtaining the Prisma connection URL like this: `postgres://<username>:<password>@db.prisma.io:5432/postgres?sslmode=require`
+  ### - 2: In DBeaver, establish a connection with PostgreSQL, change Connect by from `Host` to `URL` and fill in the information below: ***jdbc:postgresql://***`db.prisma.io:5432/postgres?sslmode=require`
+    - With `jdbc:postgresql://`: DBeaver uses the Java PostgreSQL driver, so the link starts with this.
+    - And `db.prisma.io:5432/postgres?sslmode=require`: This is the component taken from after the @ symbol in the previously obtained prisma connect URL link.
+  ### - 3: For the username and password sections, enter the key obtained from the Prisma URL above, following the tag formats mentioned earlier.
 
 ## 2 Configure Swagger OpenAPI Documentation, [see details here](https://docs.nestjs.com/openapi/introduction)
 - Swagger file configuration
@@ -288,6 +294,37 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
     app.useGlobalGuards(new JwtAuthGuard(reflector)); 
     app.use(cookieParser());
 ```
+
+## 6 Debug NestJS with Visual code
+- Create a **.vscode** folder in the root directory and create a **`launch.json`** file in the **.vscode** folder with the content as shown below.
+```bash
+  {
+      // Use IntelliSense to learn about possible attributes.
+      // Hover to view descriptions of existing attributes.
+      // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+      "version": "0.2.0",
+      "configurations": [
+          {
+              "type": "node",
+              "request": "launch",
+              "name": "Nest Debug",
+              "runtimeExecutable": "npm",
+              "runtimeArgs": [
+                  "run",
+                  "start:debug",
+                  "--",
+                  "--inspect-brk"
+              ],
+              "console": "integratedTerminal",
+              "restart": true,
+              "protocol": "auto",
+              "port": 9229,
+              "autoAttachChildProcesses": true
+          }
+      ]
+  }
+```
+
 
 
 

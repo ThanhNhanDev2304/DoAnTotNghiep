@@ -25,6 +25,5 @@ export class CreateUserDto {
     @IsOptional({ message: 'Role name is optional if is null then default role will be user' })
     roleName?: string;
 
-    
 
 }

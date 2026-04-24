@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { FilesService } from '@/files/files.service';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +16,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly roleService: RoleService,
     private readonly configService: ConfigService,
+    private readonly filesService: FilesService
   ) {}
 
   async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string): Promise<boolean> {
@@ -134,6 +136,32 @@ export class UsersService {
       return plainToInstance(UserEntity, user, { excludeExtraneousValues: false });
     } catch (error: any) {
       throw new BadRequestException('Error removing user', error.message);
+    }
+  }
+
+  async updateAvatar(id: string, fileAvatar: Express.Multer.File): Promise<UserEntity> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+      if (!user) {
+        throw new BadRequestException(`User with ID ${id} not found`);
+      }
+      if (!fileAvatar) {
+        throw new BadRequestException('No file uploaded');
+      }
+      const uploadedFile = await this.filesService.uploadSingleFile(`users/${id}/profile`, `avatar`, fileAvatar, id);
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: {
+          avatarUrl: uploadedFile.fileUrl,
+        },
+      });
+      return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
+
+    } catch (error: any) {
+      console.error('Error updating user avatar:', error);
+      throw new BadRequestException('Error updating user avatar', error.message);
     }
   }
 }

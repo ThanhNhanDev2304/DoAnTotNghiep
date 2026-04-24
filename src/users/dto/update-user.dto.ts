@@ -9,3 +9,4 @@ export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['passwor
     @MaxLength(500, { message: 'Role ID must be at most 500 characters' })
     description?: string;
 }
+

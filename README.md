@@ -325,6 +325,14 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
   }
 ```
 
+## 7 Connect With Supabase Storage Save Image for project
+- You need to download the Supabase library to be able to use it.
+```bash
+  npm i @supabase/supabase-js multer
+  npm i -D @types/multer
+```
+- Next, go to the `Integrations` section in Supabase, select `Data API`, and copy the `API_URL` (excluding the components after `.co`) into your .env file using the `SUPABASE_URL` variable.
+
 
 
 

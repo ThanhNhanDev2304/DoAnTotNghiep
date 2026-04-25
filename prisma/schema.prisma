@@ -12,13 +12,15 @@ datasource db {
 // Example models
 
 model User {
-  id    String     @id @default(uuid())
-  email String  @unique
+  id    String @id @default(uuid())
+  email String @unique
   userName  String @unique
+  googleId String? @unique
+  accountType String @default("local")
   avatarUrl String?
   backgroundUrl String?
   description String?
-  password String
+  password String?
   roleId String
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
   sessions Session[]

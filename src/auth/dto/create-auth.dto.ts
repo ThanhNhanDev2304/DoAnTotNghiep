@@ -48,3 +48,4 @@ export class LoginDto {
     @MaxLength(100, { message: 'Device ID must be at most 100 characters long' })
     deviceId!: string
 }
+

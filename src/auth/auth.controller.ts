@@ -3,9 +3,11 @@ import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
 import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
-import { User } from '@/lib/decorator/user.decorator';
+import { GoogleUserDecorator, User } from '@/lib/decorator/user.decorator';
+import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { UserEntity } from '@/users/entities/user.entity';
 import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
+import { GoogleAuthGuard } from '@/lib/passport/google-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation } from '@nestjs/swagger';
 
@@ -96,5 +98,39 @@ export class AuthController {
     async logoutAll(@Res({ passthrough: true }) res: Response, @User() user: UserEntity) {
         const result: boolean = await this.authService.logoutAll(user, res);
         return { message: 'All sessions logged out successfully', result };
+    }
+
+    @Public()
+    @UseGuards(GoogleAuthGuard)
+    @Get('google')
+    @ApiOperation({ summary: 'Initiate Google Login', description: 'With this endpoint, you can set cookie deviceId and then start google login' })
+    async googleAuth() {
+        // Guard redirects to Google, no implementation needed here
+    }
+
+    @Public()
+    @UseGuards(GoogleAuthGuard)
+    @Get('google/callback')
+    @ApiOperation({ summary: 'Google Auth Callback' })
+    async googleAuthRedirect(
+        @GoogleUserDecorator() googleUser: GoogleUser,
+        @Req() req: Request,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        // Thực tế có thể lưu deviceId vào cookie trước khi gọi /auth/google và lấy ra ở đây.
+        const deviceId = req.cookies['deviceId'];
+        if(!deviceId){
+            throw new BadRequestException('Device id is missing in cookies');
+        }
+
+        const result = await this.authService.googleLogin(googleUser, res, deviceId);
+        
+        // Sau khi đăng nhập thành công, bạn thường sẽ muốn redirect người dùng về giao diện Frontend
+        // Ví dụ: return res.redirect('http://localhost:3000/dashboard');
+        return {
+            message: 'Google Login successful',
+            accessToken: result.accessToken,
+            user: result.user,
+        };
     }
 }

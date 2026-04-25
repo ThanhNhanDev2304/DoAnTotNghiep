@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { LocalStrategy } from '@/auth/passport/local.strategy';
 import { JwtStrategy } from '@/auth/passport/jwt.strategy';
+import { GoogleStrategy } from '@/auth/passport/google/google.strategy';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { JwtStrategy } from '@/auth/passport/jwt.strategy';
     AuthService,
     LocalStrategy, // Add LocalStrategy to providers so it can be used for validating user credentials during login
     JwtStrategy, // Add JwtStrategy to providers so it can be used globally or in specific routes to protect them with JWT authentication
+    GoogleStrategy
   ],
   exports: [AuthService]
 })

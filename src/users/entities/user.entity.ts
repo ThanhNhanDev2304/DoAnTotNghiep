@@ -6,7 +6,10 @@ export class UserEntity {
   userName!: string;
 
   @Exclude() // Hide password from response
-  password!: string;
+  password?: string | null;
+
+  googleId?: string | null;
+  accountType!: string;
 
   avatarUrl?: string | null;
   backgroundUrl?: string | null;

@@ -54,9 +54,7 @@ export class FilesService {
       const fileName = `${randomUUID()}_${originalName}${fileExtension}`;
 
       // đảm bảo folder không có dấu / đầu hoặc cuối để tránh lỗi đường dẫn
-      console.log('folder trước khi xử lý:', folder);
       const sanitizedFolder = this.sanitizedFolder(folder);
-      console.log('folder sau khi xử lý:', sanitizedFolder);
 
       // ví dụ: users/avatar/uuid_avatar.png
       const filePath = `${sanitizedFolder}/${fileName}`;

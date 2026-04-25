@@ -5,6 +5,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
+import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { comparePassword } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
@@ -15,6 +16,7 @@ import { CreateSessionDto } from '@/session/dto/create-session.dto';
 
 @Injectable()
 export class AuthService {
+    private readonly CookieSameSite: 'lax' | 'strict' | 'none' = 'lax'; // You can adjust this based on your needs, defaulting is 'lax'
     private readonly refreshTokenName: string;
     private readonly expiresInRefresh: string;
     private readonly refreshTokenSecret: string;
@@ -59,11 +61,17 @@ export class AuthService {
         if (!user) {
             return null;
         }
-        const getRoleUser = user.roleId ? await this.prismaService.role.findUnique({ where: { id: user.roleId.toString() } }) : null;
+        if (user.accountType !== 'local') {
+            throw new BadRequestException('This account uses Google Sign-In',);
+        }
+        if (!user.password) {
+            throw new BadRequestException('This account does not support password login');
+        }
         const authPass = await comparePassword(password, user.password);
         if (!authPass) {
             return null;
         }
+        const getRoleUser = user.roleId ? await this.prismaService.role.findUnique({ where: { id: user.roleId.toString() } }) : null;
         return plainToInstance(UserEntity, { ...user, roleName: getRoleUser ? getRoleUser.roleName : null }, { excludeExtraneousValues: false });
     }
 
@@ -103,7 +111,7 @@ export class AuthService {
             res.cookie(this.refreshTokenName, refreshToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'strict',
+                sameSite: this.CookieSameSite,
                 maxAge: ms(expiresInRefreshToken as ms.StringValue) // Set cookie expiration to match refresh token expiration
             })
             const payload: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> = {
@@ -113,6 +121,7 @@ export class AuthService {
                 backgroundUrl: user.backgroundUrl,
                 description: user.description,
                 userName: user.userName,
+                accountType: user.accountType,
                 roleId: user.roleId,
                 roleName: user.roleName
             }
@@ -146,6 +155,100 @@ export class AuthService {
             throw new BadRequestException('Failed to refresh token', error.message);
         }
     }
+
+    async googleLogin( googleUser: GoogleUser, res: Response, deviceId: string, ) {
+        // Tìm user theo email trước
+        let user = await this.prismaService.user.findUnique({
+            where: {
+                email: googleUser.email,
+            },
+            include: {
+                role: true,
+            },
+        });
+
+        /**
+         * Business rule:
+         * Nếu email đã tồn tại nhưng là local account
+         * -> không cho login bằng Google trực tiếp
+         */
+        if (user && user.accountType === 'local') {
+            throw new BadRequestException('This email address has already been registered with Google.',);
+        }
+
+        /**
+         * Nếu chưa có user -> tạo mới account Google còn không thì chuyển qua trang login luôn
+         */
+        if (!user) {
+            const defaultRole = await this.prismaService.role.findUnique({
+                where: {
+                    roleName: this.defaultRoleName,
+                },
+            });
+            if (!defaultRole) {
+                throw new BadRequestException(
+                    'Default role not found',
+                );
+            }
+
+            /**
+             * Tránh duplicate username:
+             * abc@gmail.com
+             * abc@yahoo.com
+             * -> abc_17123456789
+             */
+            const baseUsername = googleUser.email.split('@')[0];
+
+            user = await this.prismaService.user.create({
+                data: {
+                    email: googleUser.email,
+                    userName: baseUsername,
+                    googleId: googleUser.googleId,
+                    accountType: 'google',
+
+                    avatarUrl: googleUser.avatar,
+
+                    password: null,
+
+                    roleId: defaultRole.id,
+                },
+                include: {
+                    role: true,
+                },
+            });
+        }
+
+        /**
+         * Convert sang UserEntity
+         */
+        const userEntity = plainToInstance(
+            UserEntity,
+            {
+                ...user,
+                roleName: user.role?.roleName ?? null,
+            },
+            {
+                excludeExtraneousValues: false,
+            },
+        );
+
+        /**
+         * Reuse login() để:
+         * - tạo accessToken
+         * - tạo refreshToken
+         * - lưu session DB
+         * - set cookie
+         */
+        return this.login(
+            userEntity,
+            res,
+            deviceId,
+        );
+    }
+
+
+
+
 
     async logout(user: UserEntity, oldCookieRefreshToken: string, res: Response): Promise<boolean> {
         try {

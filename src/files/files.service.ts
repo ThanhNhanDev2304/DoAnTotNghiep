@@ -112,6 +112,30 @@ export class FilesService {
         .replace(/^\/+/, '')
         .replace(/\/+$/, '');
 
+      /* Tìm file cũ theo folder + fixed name*/
+      const existingFile =
+        await this.prisma.file.findFirst({
+          where: {
+            userId,
+            path: {
+              startsWith: `${sanitizedFolder}/${fixedFileName}`, // tìm file có path bắt đầu bằng folder + fixed name
+            },
+          },
+        });
+
+      /* Nếu có file cũ → xóa khỏi Supabase*/
+      if (existingFile) {
+        await this.supabaseClient.storage
+          .from(this.bucketName)
+          .remove([existingFile.path]);
+
+        await this.prisma.file.delete({
+          where: {
+            id: existingFile.id,
+          },
+        });
+      }
+
       // path cố định → upsert mới có ý nghĩa
       const filePath = `${sanitizedFolder}/${fileName}`;
 

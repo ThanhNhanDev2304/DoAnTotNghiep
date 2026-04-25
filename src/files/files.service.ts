@@ -31,24 +31,32 @@ export class FilesService {
     this.bucketName = supabaseNameBucket;
   }
 
+  private sanitizedFolder = (folder: string): string => {
+    return folder.trim()
+      .replace(/^\/+/, '')   // Remove leading slashes
+      .replace(/\/+$/, '');  // Remove trailing slashes
+  };
+
+  private standardizeFileName = (fileName: string, fileExtension: string) => {
+    return fileName
+      .replace(fileExtension, '') // bỏ phần extension 
+      .replace(/\s+/g, '-') // space -> "-" 
+      .toLowerCase(); // chuyển về lowercase ham nay lam gi
+  };
 
   async uploadFile(folder: string, file: Express.Multer.File, userId?: string,): Promise<FileEntity> {
     try {
       const fileExtension = extname(file.originalname);
 
-      const originalName = file.originalname
-        .replace(fileExtension, '') // bỏ phần extension
-        .replace(/\s+/g, '-') // space -> "-"
-        .toLowerCase(); // chuyển về lowercase
+      const originalName = this.standardizeFileName(file.originalname, fileExtension); // bỏ extension và chuẩn hóa tên file gốc (ví dụ: "My Avatar.png" -> "my-avatar")
 
       // uuid + tên file gốc
       const fileName = `${randomUUID()}_${originalName}${fileExtension}`;
 
       // đảm bảo folder không có dấu / đầu hoặc cuối để tránh lỗi đường dẫn
       console.log('folder trước khi xử lý:', folder);
-      const sanitizedFolder = folder.trim()
-        .replace(/^\/+/, '')   // bỏ dấu / đầu
-        .replace(/\/+$/, '');  // bỏ dấu / cuối
+      const sanitizedFolder = this.sanitizedFolder(folder);
+      console.log('folder sau khi xử lý:', sanitizedFolder);
 
       // ví dụ: users/avatar/uuid_avatar.png
       const filePath = `${sanitizedFolder}/${fileName}`;
@@ -107,16 +115,13 @@ export class FilesService {
       const fileName = `${fixedFileName}${fileExtension}`;
 
       // sanitize folder tránh lỗi path
-      const sanitizedFolder = folder
-        .trim()
-        .replace(/^\/+/, '')
-        .replace(/\/+$/, '');
+      const sanitizedFolder = this.sanitizedFolder(folder);
 
       /* Tìm file cũ theo folder + fixed name*/
       const existingFile =
         await this.prisma.file.findFirst({
           where: {
-            userId,
+            ...(userId ? { userId } : {}), // nếu có userId thì thêm điều kiện tìm theo userId để tránh xóa nhầm file của người khác
             path: {
               startsWith: `${sanitizedFolder}/${fixedFileName}`, // tìm file có path bắt đầu bằng folder + fixed name
             },
@@ -125,7 +130,7 @@ export class FilesService {
 
       /* Nếu có file cũ → xóa khỏi Supabase*/
       if (existingFile) {
-        await this.supabaseClient.storage
+        const { error: removeError } = await this.supabaseClient.storage
           .from(this.bucketName)
           .remove([existingFile.path]);
 
@@ -134,6 +139,10 @@ export class FilesService {
             id: existingFile.id,
           },
         });
+        if (removeError) {
+          console.error('Error removing existing file from Supabase Storage:', removeError);
+          throw new Error(`Failed to remove existing file from Supabase Storage: ${removeError.message}`);
+        }
       }
 
       // path cố định → upsert mới có ý nghĩa

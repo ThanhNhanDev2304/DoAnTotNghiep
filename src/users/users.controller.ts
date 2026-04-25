@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { UsersService } from '@/users/users.service';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import { UpdateUserAvatarOrBGDto, UpdateUserDto, UserImageType } from '@/users/dto/update-user.dto';
 import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { UserEntity } from '@/users/entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -42,33 +42,43 @@ export class UsersController {
     return { message: 'User updated successfully', result };
   }
 
-  @Patch('avatar/:id')
-  @ApiOperation({ summary: 'Update a user\'s avatar' })
+
+  @Patch('avatarorbg/:id')
+  @ApiOperation({ summary: 'Update a user\'s avatar or background' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ // swagger file upload support
-    schema: {
-      type: 'object',
-      properties: {
-        fileAvatar: {
-          type: 'string',
-          format: 'binary',
-        },
+  @ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      imgProfile: {
+        type: 'string',
+        format: 'binary',
+      },
+      type: {
+        type: 'string',
+        enum: ['avatar', 'background'],
       },
     },
-  })
-  @UseInterceptors(FileInterceptor('fileAvatar'))
-  async updateAvatar(@Param('id') id: string, @UploadedFile() fileAvatar: Express.Multer.File): Promise<{ message: string; result: UserEntity }> {
+    required: ['imgProfile', 'type'],
+  },
+})
+  @UseInterceptors(FileInterceptor('imgProfile')) // Tên trường file trong form-data phải trùng với tên này
+  async updateAvatar(@Param('id') id: string, @UploadedFile() imgProfile: Express.Multer.File, @Body() updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto): Promise<{ message: string; result: UserEntity }> {
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
-    if (!allowedMimeTypes.includes(fileAvatar.mimetype)) {
+    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+    if (!allowedMimeTypes.includes(imgProfile.mimetype)) {
       throw new BadRequestException('Invalid file type. Only JPEG, JPG, PNG, WEBP, and GIF images are allowed.');
     }
-    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
-    if (fileAvatar.size > maxSizeInBytes) {
+    if (imgProfile.size > maxSizeInBytes) {
       throw new BadRequestException('File size exceeds the maximum limit of 10MB.');
     }
-    const result = await this.usersService.updateAvatar(id, fileAvatar);
+    if (updateUserAvatarOrBGDto.typeImg !== UserImageType.AVATAR && updateUserAvatarOrBGDto.typeImg !== UserImageType.BACKGROUND) {
+      throw new BadRequestException('Invalid image type. Only avatar and background images are allowed.');
+    }
+    const result = await this.usersService.updateAvatarOrBG(id, imgProfile, updateUserAvatarOrBGDto);
     return { message: 'User avatar updated successfully', result };
   }
+
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })

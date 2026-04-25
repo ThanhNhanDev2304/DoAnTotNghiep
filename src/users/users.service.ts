@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/users/dto/update-user.dto';
+import { UpdateUserAvatarOrBGDto, UpdateUserDto, UserImageType } from '@/users/dto/update-user.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UserEntity } from '@/users/entities/user.entity';
 import { RoleService } from '@/role/role.service';
@@ -139,7 +139,7 @@ export class UsersService {
     }
   }
 
-  async updateAvatar(id: string, fileAvatar: Express.Multer.File): Promise<UserEntity> {
+  async updateAvatarOrBG(id: string, fileAvatar: Express.Multer.File, updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto): Promise<UserEntity> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -150,11 +150,11 @@ export class UsersService {
       if (!fileAvatar) {
         throw new BadRequestException('No file uploaded');
       }
-      const uploadedFile = await this.filesService.uploadSingleFile(`users/${id}/profile`, `avatar`, fileAvatar, id);
+      const uploadedFile = await this.filesService.uploadSingleFile(`users/${id}/profile`, updateUserAvatarOrBGDto.typeImg, fileAvatar, id);
       const updatedUser = await this.prisma.user.update({
         where: { id },
         data: {
-          avatarUrl: uploadedFile.fileUrl,
+          ...(updateUserAvatarOrBGDto.typeImg === UserImageType.AVATAR ? { avatarUrl: uploadedFile.fileUrl } : { backgroundUrl: uploadedFile.fileUrl }),
         },
       });
       return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });

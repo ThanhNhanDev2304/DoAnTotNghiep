@@ -3,7 +3,7 @@ import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
 import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
-import { GoogleUserDecorator, User } from '@/lib/decorator/user.decorator';
+import { UserGoogle, User } from '@/lib/decorator/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { UserEntity } from '@/users/entities/user.entity';
 import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
@@ -113,7 +113,7 @@ export class AuthController {
     @Get('google/callback')
     @ApiOperation({ summary: 'Google Auth Callback' })
     async googleAuthRedirect(
-        @GoogleUserDecorator() googleUser: GoogleUser,
+        @UserGoogle() googleUser: GoogleUser,
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ) {

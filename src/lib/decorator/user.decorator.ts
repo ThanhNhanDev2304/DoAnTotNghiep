@@ -9,7 +9,7 @@ export const User = createParamDecorator(
   },
 );
 
-export const GoogleUserDecorator = createParamDecorator(
+export const UserGoogle = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     return request.user as GoogleUser;

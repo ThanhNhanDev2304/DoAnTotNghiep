@@ -206,7 +206,7 @@ export class AuthService {
                     googleId: googleUser.googleId,
                     accountType: 'google',
 
-                    avatarUrl: googleUser.avatar,
+                    avatarUrl: googleUser.avatarUrl,
 
                     password: null,
 

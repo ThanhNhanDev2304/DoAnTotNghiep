@@ -15,20 +15,21 @@ export class EmailService {
         private readonly configService: ConfigService
     ) {
         const host = this.configService.get<string>('EMAIL_HOST');
-        const port = this.configService.get<number>('EMAIL_PORT');
+        const port = Number(this.configService.get<string>('EMAIL_PORT') || '587');
         const authUser = this.configService.get<string>('EMAIL_AUTH_USER');
         const authPass = this.configService.get<string>('EMAIL_AUTH_PASS');
         this.fromEmail = this.configService.get<string>('EMAIL_FROM')!;
         this.supportEmail = this.configService.get<string>('SUPPORT_EMAIL')!;
-        this.appName = this.configService.get<string>('APP_NAME')!;
+        this.appName = this.configService.get<string>('APP_NAME') || 'Project UMC';
 
-        if (!host || !port || !authUser || !authPass) {
+        if (!host || !port || !authUser || !authPass || !this.fromEmail || !this.supportEmail) {
             throw new Error(`
                 ${!host ? 'EMAIL_HOST is not defined in the environment variables. ' : ''}
                 ${!port ? 'EMAIL_PORT is not defined in the environment variables. ' : ''}
                 ${!authUser ? 'EMAIL_AUTH_USER is not defined in the environment variables. ' : ''}
                 ${!authPass ? 'EMAIL_AUTH_PASS is not defined in the environment variables.' : ''}
-                ${!this.appName ? 'APP_NAME is not defined in the environment variables. ' : ''}`
+                ${!this.fromEmail ? 'EMAIL_FROM is not defined in the environment variables. ' : ''}
+                ${!this.supportEmail ? 'SUPPORT_EMAIL is not defined in the environment variables. ' : ''}`
             );
         }
         this.transporter = nodemailer.createTransport({

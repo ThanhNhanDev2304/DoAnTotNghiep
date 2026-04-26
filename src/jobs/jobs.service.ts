@@ -71,11 +71,12 @@ export class JobsService {
         waitForCompletion: true,
     })
     async cleanupExpiredPendingRegistrations() {
-        await this.prisma.pendingRegistration.deleteMany({
+        const result = await this.prisma.pendingRegistration.deleteMany({
             where: {
                 otpExpiresAt: { lt: new Date() },
             },
         });
+        this.logger.log(`✅ Deleted ${result.count} expired pending registrations successfully`);
     }
 
 }

@@ -28,15 +28,9 @@ export class AuthController {
     @Public() // Mark this route as public, allowing access without JWT authentication.
     @ApiOperation({ summary: 'Register a new user' }) // Add Swagger documentation for this endpoint
     @Post('register')
-    async register(
-        @Body() registerDto: RegisterDto,
-        @Res({ passthrough: true }) res: Response
-    ) {
-        const Otp = await this.authService.registerWithOTP(registerDto);
-        return {
-            message: 'Registration initiated successfully. Please verify the OTP sent to your email to complete registration.',
-            otpPreview: Otp, // In production, you would not return the OTP or any sensitive information. This is just for demonstration.
-        };
+    async register(@Body() registerDto: RegisterDto) {
+        await this.authService.registerWithOTP(registerDto);
+        return { message: 'Registration initiated successfully. Please verify the OTP sent to your email to complete registration.' };
     }
 
     @Public()

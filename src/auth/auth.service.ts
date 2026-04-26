@@ -13,7 +13,8 @@ import type { Response } from 'express';
 import ms from 'ms';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
 import { generateNumericOtp } from '@/lib/otp/generate-otp';
-import { EmailService } from '../email/email.service';
+import { EmailService } from '@/email/email.service';
+import { CreateUserDto } from '@/users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +35,7 @@ export class AuthService {
         private readonly configService: ConfigService,
         private readonly usersService: UsersService,
         private readonly sessionService: SessionService,
-        private readonly EmailService: EmailService
+        private readonly emailService: EmailService
 
     ) {
         this.refreshTokenName = this.configService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
@@ -122,7 +123,7 @@ export class AuthService {
 
             // if pendingRegistration error 
             try {
-                await this.EmailService.sendRegisterOtp(email, userName, otp, this.otpExpire);
+                await this.emailService.sendRegisterOtp(email, userName, otp, this.otpExpire);
             } catch (error) {
                 await this.prismaService.pendingRegistration.deleteMany({
                     where: {
@@ -134,6 +135,7 @@ export class AuthService {
                 );
             }
 
+            console.log(`Generated OTP for ${email}: ${otp} (expires at ${otpExpiresAt.toISOString()})`); // Log OTP for testing purposes. Remove in production.
             return otp;
         } catch (error: any) {
             if (error instanceof BadRequestException) {

@@ -21,6 +21,8 @@ export class AuthService {
     private readonly expiresInRefresh: string;
     private readonly refreshTokenSecret: string;
     private readonly defaultRoleName: string;
+    private readonly otpExpire: string;
+    private readonly otpLength: number;
 
     constructor(
         private readonly prismaService: PrismaService,
@@ -33,6 +35,10 @@ export class AuthService {
         this.refreshTokenName = this.configService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
         this.expiresInRefresh = this.configService.get<string>('JWT_REFRESH_EXPIRE')!;
         this.refreshTokenSecret = this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')!;
+
+        this.otpExpire = this.configService.get<string>('OTP_EXPIRE') || '5m';
+        this.otpLength = Number(this.configService.get<string>('OTP_LENGTH') || '6');
+
         if (!this.refreshTokenName || this.refreshTokenName.trim() === '') {
             throw new Error('Refresh token cookie name is not defined in environment variables');
         }
@@ -42,9 +48,27 @@ export class AuthService {
         if (!this.refreshTokenSecret || this.refreshTokenSecret.trim() === '') {
             throw new Error('JWT refresh token secret is not defined in environment variables');
         }
+        if (!this.otpExpire || this.otpExpire.trim() === '') {
+            throw new Error('OTP_EXPIRE is not defined in environment variables');
+        }
+        if (!Number.isInteger(this.otpLength) || this.otpLength < 4) {
+            throw new Error('OTP_LENGTH must be an integer >= 4');
+        }
 
         this.defaultRoleName = this.configService.get<string>('NAME_ROLE_USER') || 'USER';
     }
+
+    async register_2FA(registerDto: RegisterDto) {
+        try {
+            const { userName, email, password } = registerDto;
+            const existedUser = await this.usersService.checkEmailOrUsernameExists(email, userName);
+        } catch (error: any) {
+            
+        }
+    }
+
+
+
 
     private async generateRefreshToken(payload: { userId: string; _sub: string, deviceId: string }): Promise<string> {
         const expiresIn = this.expiresInRefresh;
@@ -156,7 +180,8 @@ export class AuthService {
         }
     }
 
-    async googleLogin( googleUser: GoogleUser, res: Response, deviceId: string, ) {
+    // Google login flow:
+    async googleLogin(googleUser: GoogleUser, res: Response, deviceId: string,) {
         // Tìm user theo email trước
         let user = await this.prismaService.user.findUnique({
             where: {
@@ -248,10 +273,6 @@ export class AuthService {
             deviceId,
         );
     }
-
-
-
-
 
     async logout(user: UserEntity, oldCookieRefreshToken: string, res: Response): Promise<boolean> {
         try {

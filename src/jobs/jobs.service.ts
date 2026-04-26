@@ -9,23 +9,58 @@ export class JobsService {
         private readonly configService: ConfigService,
         private readonly prisma: PrismaService,
 
-    ) {}
+    ) { }
     private readonly logger = new Logger(JobsService.name);
 
-    @Cron(CronExpression.EVERY_MINUTE,{
-        name: 'handleExpiredSessions', // Tên của cron job để dễ dàng quản lý và theo dõi
-        timeZone: 'Asia/Ho_Chi_Minh', // Đặt múi giờ cho cron job
-        waitForCompletion: true, // Đảm bảo cron job không chạy đồng thời nếu lần trước chưa hoàn thành
+    @Cron(CronExpression.EVERY_MINUTE, {
+        name: 'handleExpiredSessions',
+        timeZone: 'Asia/Ho_Chi_Minh',
+        waitForCompletion: true,
     })
     async handleExpiredSessions() {
         try {
             const now = new Date();
-            const result = await this.prisma.session.deleteMany({
+
+            // Lấy thông tin sessions sắp xóa
+            const expiredSessions = await this.prisma.session.findMany({
                 where: {
                     expiresAt: { lt: now },
                 },
+                select: {
+                    id: true,
+                    userId: true,
+                    deviceId: true,
+                    expiresAt: true,
+                    createdAt: true,
+                }
             });
-            this.logger.log(`Deleted ${result.count} expired sessions successfully.`);
+
+            if (expiredSessions.length > 0) {
+                this.logger.log(`Found ${expiredSessions.length} expired sessions:`);
+
+                // Log chi tiết từng session
+                expiredSessions.forEach(session => {
+                    this.logger.log(`
+                                    - Session ID: ${session.id}
+                                        User ID: ${session.userId}
+                                        Device ID: ${session.deviceId}
+                                        Expired at: ${session.expiresAt.toISOString()}
+                                        Created at: ${session.createdAt.toISOString()}
+                                    `);
+                });
+
+                // Thực hiện xóa
+                const result = await this.prisma.session.deleteMany({
+                    where: {
+                        expiresAt: { lt: now },
+                    },
+                });
+
+                this.logger.log(`✅ Deleted ${result.count} expired sessions successfully`);
+            } else {
+                this.logger.log('No expired sessions found');
+            }
+
         } catch (error: any) {
             this.logger.error(`Error handling expired sessions: ${error.message}`);
         }

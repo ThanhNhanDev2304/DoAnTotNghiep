@@ -29,6 +29,14 @@ export class UsersService {
         NOT: excludeId ? { id: excludeId } : undefined, // Exclude the current user when checking for updates
       }
     });
+    if (user) {
+      if (user.email === email) {
+        throw new Error('Email already exists');
+      }
+      if (user.userName === userName) {
+        throw new Error('Username already exists');
+      }
+    }
     return !!user; // Returns true if user exists, false otherwise
   }
 

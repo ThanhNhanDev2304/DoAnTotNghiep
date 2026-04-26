@@ -3,7 +3,7 @@ import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
 import { LoginDto, RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
-import { UserGoogle, User } from '@/lib/decorator/user.decorator';
+import { UserGoogle, User, DeviceId } from '@/lib/decorator/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { UserEntity } from '@/users/entities/user.entity';
 import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
@@ -16,9 +16,9 @@ export class AuthController {
     private readonly refreshTokenName: string;
     constructor(
         private readonly authService: AuthService,
-        private readonly ConfigService: ConfigService
+        private readonly configService: ConfigService
     ) {
-        this.refreshTokenName = this.ConfigService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
+        this.refreshTokenName = this.configService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
         if (!this.refreshTokenName || this.refreshTokenName.trim() === '') {
             throw new Error('Refresh token cookie name is not defined in environment variables');
         }
@@ -45,8 +45,8 @@ export class AuthController {
     @UseGuards(LocalAuthGuard) // Apply the local authentication guard to this route
     @ApiOperation({ summary: 'Login a user for a session and cookie management' }) // Add Swagger documentation for this endpoint
     @Post('login')
-    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto) {
-        const result = await this.authService.login(user, res, loginDto.deviceId);
+    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto, @DeviceId() deviceId: string) {
+        const result = await this.authService.login(user, res, deviceId);
         return {
             message: 'Login successful',
             accessToken: result.accessToken,
@@ -114,19 +114,8 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     @Get('google/callback')
     @ApiOperation({ summary: 'Google Auth Callback' })
-    async googleAuthRedirect(
-        @UserGoogle() googleUser: GoogleUser,
-        @Req() req: Request,
-        @Res({ passthrough: true }) res: Response,
-    ) {
-        // Thực tế có thể lưu deviceId vào cookie trước khi gọi /auth/google và lấy ra ở đây.
-        const deviceId = req.cookies['deviceId'];
-        if (!deviceId) {
-            throw new BadRequestException('Device id is missing in cookies');
-        }
-
+    async googleAuthRedirect( @UserGoogle() googleUser: GoogleUser, @DeviceId() deviceId: string, @Res({ passthrough: true }) res: Response ) {
         const result = await this.authService.googleLogin(googleUser, res, deviceId);
-
         // Sau khi đăng nhập thành công, bạn thường sẽ muốn redirect người dùng về giao diện Frontend
         // Ví dụ: return res.redirect('http://localhost:3000/dashboard');
         return {

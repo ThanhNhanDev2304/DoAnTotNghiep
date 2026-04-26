@@ -56,10 +56,6 @@ export class LoginDto {
     @MinLength(6, { message: 'Password must be at least 6 characters long' })
     password!: string
 
-    @ApiProperty({ example: 'device123', description: 'The ID of the device associated with the session' })
-    @IsNotEmpty({ message: 'Device ID must not be empty' })
-    @IsString({ message: 'Device ID must be a string' })
-    @MaxLength(100, { message: 'Device ID must be at most 100 characters long' })
-    deviceId!: string
+
 }
 

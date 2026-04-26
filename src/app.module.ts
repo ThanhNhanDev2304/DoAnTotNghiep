@@ -9,6 +9,8 @@ import { SeedDbModule } from '@/seed-db/seed-db.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@/auth/auth.module';
 import { FilesModule } from './files/files.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -17,7 +19,9 @@ import { FilesModule } from './files/files.module';
       envFilePath: ['.env.development.local', '.env.development', '.env.local', '.env'], // Load environment variables from .env files in order of priority
      }), // Load environment variables from .env file and make them globally available
     UsersModule, PrismaModule, SessionModule, RoleModule, 
-    SeedDbModule, AuthModule, FilesModule // Module to seed the database with initial data on application startup
+    SeedDbModule /*Module to seed the database with initial data on application startup*/,
+    ScheduleModule.forRoot(), /* Enable scheduling capabilities for tasks like cleaning up expired sessions */
+    AuthModule, FilesModule, JobsModule
   ],
   controllers: [AppController],
   providers: [AppService],

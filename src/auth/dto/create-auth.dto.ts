@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator"
+import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from "class-validator"
 
 export class RegisterDto {
 
@@ -8,6 +8,7 @@ export class RegisterDto {
     @IsString({ message: 'Username must be a string' })
     @MaxLength(100, { message: 'Username must be at most 100 characters long' })
     @MinLength(3, { message: 'Username must be at least 3 characters long' })
+    @Matches(/^[a-zA-Z0-9_]+$/, { message: 'Username can only contain letters, numbers and underscore' })
     userName!: string
 
     @ApiProperty({ example: 'example@gmail.com', description: 'The email of the new user' })
@@ -25,6 +26,19 @@ export class RegisterDto {
     @MinLength(6, { message: 'Password must be at least 6 characters long' })
     password!: string
 
+}
+
+export class VerifyRegisterOtpDto {
+  @ApiProperty({ example: 'example@gmail.com', description: 'Email used during registration' })
+  @IsNotEmpty({ message: 'Email must not be empty' })
+  @IsEmail({}, { message: 'Email must be a valid email address' })
+  email!: string;
+
+  @ApiProperty({ example: '123456', description: 'OTP code sent to email' })
+  @IsNotEmpty({ message: 'OTP must not be empty' })
+  @IsString({ message: 'OTP must be a string' })
+  @Matches(/^\d+$/, { message: 'OTP must contain only digits' })
+  otp!: string;
 }
 
 export class LoginDto {

@@ -4,12 +4,14 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { roles, users } from '@/seed-db/seed/sample';
 import { ConfigService } from '@nestjs/config';
 import { generatePasswordHash } from '@/lib/bcrypt/bcrypt';
+import { FilesService } from '@/files/files.service';
 
 @Injectable()
 export class SeedDbService implements OnModuleInit {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        private readonly filesService: FilesService
     ) { }
 
     private readonly logger = new Logger(SeedDbService.name);
@@ -62,7 +64,7 @@ export class SeedDbService implements OnModuleInit {
             }
             const LIST_USERS = await Promise.all(users.map(async user => ({
                 ...user,
-                password: await generatePasswordHash(user.password ? user.password : this.configService.get<string>('DEFAULT_USER_PASSWORD')!, saltRounds), // Hash password nếu có
+                password: await generatePasswordHash(user.password ? user.password : this.configService.get<string>('DEFAULT_PASSWORD')!, saltRounds), // Hash password nếu có
                 roleId: user.userName === 'Admin' ? ID_ROLE_ADMIN.id : ID_ROLE_USER.id // Gán roleId dựa trên userName
                 })
             ));
@@ -98,14 +100,16 @@ export class SeedDbService implements OnModuleInit {
 
     async clear() {
         try {
-            this.logger.warn('Clearing database...');
-            // Clear theo thứ tự ngược lại (xóa con trước, xóa cha sau)
+            await this.filesService.clearBucketStorage();
+            await this.prisma.pendingRegistration.deleteMany();
+            await this.prisma.session.deleteMany();
+            await this.prisma.file.deleteMany();
             await this.prisma.user.deleteMany();
             await this.prisma.role.deleteMany();
 
-            this.logger.log('Cleared all data from the database successfully.');
+            this.logger.log('Cleared database records and Supabase Storage successfully.');
         } catch (error: any) {
-            this.logger.error(`Error during clearing database: ${error.message}`);
+            this.logger.error(`Error during clearing database and Supabase Storage: ${error.message}`);
             throw error;
         }
     }

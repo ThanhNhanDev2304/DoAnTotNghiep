@@ -11,6 +11,7 @@ import ms from 'ms';
 import { LocalStrategy } from '@/auth/passport/local.strategy';
 import { JwtStrategy } from '@/auth/passport/jwt.strategy';
 import { GoogleStrategy } from '@/auth/passport/google/google.strategy';
+import { EmailModule } from '@/email/email.module';
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { GoogleStrategy } from '@/auth/passport/google/google.strategy';
         };
       },
       inject: [ConfigService], // Inject ConfigService to access environment variables
-    })
+    }),
+    EmailModule
   ],
   controllers: [AuthController],
   providers: [

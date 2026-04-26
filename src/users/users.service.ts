@@ -5,7 +5,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { UserEntity } from '@/users/entities/user.entity';
 import { RoleService } from '@/role/role.service';
 import { ConfigService } from '@nestjs/config';
-import { generatePasswordHash } from '@/lib/bcrypt/bcrypt';
+import { ensurePasswordHash, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { FilesService } from '@/files/files.service';
@@ -17,9 +17,9 @@ export class UsersService {
     private readonly roleService: RoleService,
     private readonly configService: ConfigService,
     private readonly filesService: FilesService
-  ) {}
+  ) { }
 
-  async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string): Promise<boolean> {
+  async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string): Promise<{ exists: boolean; field?: 'email' | 'username' }> {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -29,7 +29,19 @@ export class UsersService {
         NOT: excludeId ? { id: excludeId } : undefined, // Exclude the current user when checking for updates
       }
     });
-    return !!user; // Returns true if user exists, false otherwise
+    if (!user) {
+      return { exists: false };
+    }
+
+    if (user.email === email) {
+      return { exists: true, field: 'email' };
+    }
+
+    if (user.userName === userName) {
+      return { exists: true, field: 'username' };
+    }
+
+    return { exists: false };
   }
 
   async searchUserByEmailOrUsername(emailOrUserName: string): Promise<UserEntity | null> {
@@ -46,8 +58,14 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     try {
-      if (await this.checkEmailOrUsernameExists(createUserDto.email, createUserDto.userName)) {
-        throw new BadRequestException('Email or username already exists');
+      const checkEmailOrUsername = await this.checkEmailOrUsernameExists(createUserDto.email, createUserDto.userName);
+      if (checkEmailOrUsername.exists) {
+        if (checkEmailOrUsername.field === 'email') {
+          throw new BadRequestException('Email already exists');
+        }
+        if (checkEmailOrUsername.field === 'username') {
+          throw new BadRequestException('Username already exists');
+        }
       }
       const roleId: (string | null) = await this.roleService.findRoleIdByName(createUserDto.roleName || this.configService.get<string>('NAME_ROLE_USER') || 'USER');
       if (!roleId || roleId === null) {
@@ -59,7 +77,7 @@ export class UsersService {
           email: createUserDto.email,
           userName: createUserDto.userName,
           roleId,
-          password: await generatePasswordHash(createUserDto.password, saltRounds)
+          password: await ensurePasswordHash(createUserDto.password, saltRounds)
         },
       });
       return newUser ? plainToInstance(UserEntity, newUser, { excludeExtraneousValues: false }) : new UserEntity();
@@ -108,16 +126,21 @@ export class UsersService {
       if (!user) {
         throw new BadRequestException(`User with ID ${id} not found`);
       }
-      const checkEmailOrUsername = await this.checkEmailOrUsernameExists(updateUserDto.email || '', updateUserDto.userName || '', id);
-      if (checkEmailOrUsername) {
-        throw new BadRequestException('The email address or username already exists or is already taken by someone else.');
+      const checkResult = await this.checkEmailOrUsernameExists( updateUserDto.email || user.email, updateUserDto.userName || user.userName, id );
+
+      // Fix: Check exists property, not the object itself
+      if (checkResult.exists) {
+        if (checkResult.field === 'email') {
+          throw new BadRequestException('Email already exists');
+        }
+        throw new BadRequestException('Username already exists');
       }
       const updatedUser = await this.prisma.user.update({
         where: { id },
         data: updateUserDto,
       });
       return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
-    } catch (error : any) {
+    } catch (error: any) {
       throw new BadRequestException('Error updating user', error.message);
     }
   }

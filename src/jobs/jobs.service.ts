@@ -12,7 +12,7 @@ export class JobsService {
     ) { }
     private readonly logger = new Logger(JobsService.name);
 
-    @Cron(CronExpression.EVERY_MINUTE, {
+        @Cron(CronExpression.EVERY_MINUTE, {
         name: 'handleExpiredSessions',
         timeZone: 'Asia/Ho_Chi_Minh',
         waitForCompletion: true,
@@ -65,7 +65,6 @@ export class JobsService {
             this.logger.error(`Error handling expired sessions: ${error.message}`);
         }
     }
-
 
     @Cron(CronExpression.EVERY_MINUTE, {
         name: 'cleanupExpiredPendingRegistrations',

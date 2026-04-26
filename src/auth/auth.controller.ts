@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/lib/decorator/metadata';
-import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
 import { GoogleUserDecorator, User } from '@/lib/decorator/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
@@ -10,7 +10,6 @@ import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
 import { GoogleAuthGuard } from '@/lib/passport/google-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation } from '@nestjs/swagger';
-import { VerifyRegisterOtpDto } from '@/auth/dto/verify-register-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -33,7 +32,7 @@ export class AuthController {
         @Body() registerDto: RegisterDto,
         @Res({ passthrough: true }) res: Response
     ) {
-        const Otp = await this.authService.register_2FA(registerDto);
+        const Otp = await this.authService.registerWithOTP(registerDto);
         return {
             message: 'Registration initiated successfully. Please verify the OTP sent to your email to complete registration.',
             otpPreview: Otp, // In production, you would not return the OTP or any sensitive information. This is just for demonstration.

@@ -11,6 +11,7 @@ import { AuthModule } from '@/auth/auth.module';
 import { FilesModule } from './files/files.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JobsModule } from './jobs/jobs.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { JobsModule } from './jobs/jobs.module';
     UsersModule, PrismaModule, SessionModule, RoleModule, 
     SeedDbModule /*Module to seed the database with initial data on application startup*/,
     ScheduleModule.forRoot(), /* Enable scheduling capabilities for tasks like cleaning up expired sessions */
-    AuthModule, FilesModule, JobsModule
+    AuthModule, FilesModule, JobsModule, EmailModule
   ],
   controllers: [AppController],
   providers: [AppService],

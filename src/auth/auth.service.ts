@@ -4,9 +4,8 @@ import { UsersService } from '@/users/users.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { UserEntity } from '@/users/entities/user.entity';
@@ -14,7 +13,7 @@ import type { Response } from 'express';
 import ms from 'ms';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
 import { generateNumericOtp } from '@/lib/otp/generate-otp';
-import { VerifyRegisterOtpDto } from './dto/verify-register-otp.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +33,8 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
         private readonly usersService: UsersService,
-        private readonly sessionService: SessionService
+        private readonly sessionService: SessionService,
+        private readonly EmailService: EmailService
 
     ) {
         this.refreshTokenName = this.configService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
@@ -67,7 +67,7 @@ export class AuthService {
         this.defaultRoleName = this.configService.get<string>('NAME_ROLE_USER') || 'USER';
     }
 
-    async register_2FA(registerDto: RegisterDto): Promise<string> {
+    async registerWithOTP(registerDto: RegisterDto): Promise<string> {
         try {
             const now = new Date();
             const { userName, email, password } = registerDto;
@@ -106,7 +106,7 @@ export class AuthService {
                 Date.now() + ms(this.otpExpire as ms.StringValue),
             );
 
-            await this.prismaService.pendingRegistration.upsert({
+            const pendingRegistration = await this.prismaService.pendingRegistration.upsert({
                 where: { email },
                 update: {
                     userName, passwordHash, otpHash, otpExpiresAt,
@@ -119,6 +119,20 @@ export class AuthService {
                     resendAfter: null,
                 },
             });
+
+            // if pendingRegistration error 
+            try {
+                await this.EmailService.sendRegisterOtp(email, userName, otp, this.otpExpire);
+            } catch (error) {
+                await this.prismaService.pendingRegistration.deleteMany({
+                    where: {
+                        email: pendingRegistration.email,
+                    },
+                });
+                throw new BadRequestException(
+                    'Failed to send OTP email. Please try registering again.',
+                );
+            }
 
             return otp;
         } catch (error: any) {

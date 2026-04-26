@@ -29,21 +29,6 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model Session {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refreshToken String   @unique
-  deviceId     String
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@unique([userId, deviceId]) // Composite unique constraint to ensure one session per device per user
-  @@index([deviceId]) // Index for faster lookups by deviceId
-}
-
-
 model Role {
   id    String     @id @default(uuid())
   roleName  String  @unique
@@ -52,7 +37,6 @@ model Role {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 model File {
   id          String   @id @default(uuid())
@@ -69,3 +53,33 @@ model File {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  deviceId     String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, deviceId]) // Composite unique constraint to ensure one session per device per user
+  @@index([deviceId]) // Index for faster lookups by deviceId
+}
+
+model PendingRegistration { 
+  id           String   @id @default(uuid())
+  email        String   @unique
+  userName     String   @unique
+  passwordHash String
+  otpHash      String
+  otpExpiresAt DateTime
+  attemptCount Int      @default(0)
+  resendAfter  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+

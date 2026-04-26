@@ -198,11 +198,14 @@ export class AuthService {
              * -> abc_17123456789
              */
             const baseUsername = googleUser.email.split('@')[0];
+            // const baseUsername = googleUser.email.toLowerCase().trim();
+            const username = `${baseUsername}_${Date.now()}`;
+            // const username = googleUser.email.toLowerCase();
 
             user = await this.prismaService.user.create({
                 data: {
                     email: googleUser.email,
-                    userName: baseUsername,
+                    userName: username,
                     googleId: googleUser.googleId,
                     accountType: 'google',
 

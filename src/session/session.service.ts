@@ -23,12 +23,12 @@ export class SessionService {
     return this.prismaService.$transaction(async (tx) => { // Transaction ensures atomicity of the session management logic
       // 1. Check device tồn tại chưa
       const existingSession = await tx.session.findUnique({
-        where: { deviceId },
+        where: { userId_deviceId: { deviceId, userId } },
       });
       // CASE 1: UPDATE
       if (existingSession) {
         return tx.session.update({
-          where: { deviceId },
+          where: { userId_deviceId: { deviceId, userId } },
           data: {
             refreshToken,
             expiresAt,
@@ -37,6 +37,9 @@ export class SessionService {
       }
       // CASE 2: DEVICE MỚI → enforce limit
       const limit = Number(this.configService.get<string>('NUMBER_OF_DEVICES'));
+      if (isNaN(limit) || limit <= 0 || !Number.isInteger(limit)) {
+        throw new Error('NUMBER_OF_DEVICES must be a positive integer');
+      }
       const sessions = await tx.session.findMany({
         where: {
           userId,
@@ -77,8 +80,7 @@ export class SessionService {
   async deleteSessionByDeviceId(userId: string, deviceId: string): Promise<boolean> {
     const session = await this.prismaService.session.delete({
       where: { 
-        deviceId,
-        userId
+        userId_deviceId: { deviceId, userId }
        },
     });
     if (!session) {

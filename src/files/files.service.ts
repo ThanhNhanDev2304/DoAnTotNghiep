@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateFileDto } from '@/files/dto/create-file.dto';
 import { UpdateFileDto } from '@/files/dto/update-file.dto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -12,6 +12,7 @@ import { FileEntity } from '@/files/entities/file.entity';
 
 @Injectable()
 export class FilesService {
+  private readonly logger = new Logger(FilesService.name);
   private supabaseClient: SupabaseClient;
   private readonly bucketName: string;
 
@@ -43,6 +44,68 @@ export class FilesService {
       .replace(/\s+/g, '-') // space -> "-" 
       .toLowerCase(); // chuyển về lowercase ham nay lam gi
   };
+
+  // Đệ quy để thu thập tất cả file paths trong bucket, bao gồm cả file trong các folder con
+  private async collectBucketFilePaths(folder: string = ''): Promise<string[]> {
+    const normalizedFolder = folder.trim().replace(/^\/+/, '').replace(/\/+$/, '');
+    const { data, error } = await this.supabaseClient.storage
+      .from(this.bucketName)
+      .list(normalizedFolder, {
+        limit: 1000,
+        offset: 0,
+        sortBy: { column: 'name', order: 'asc' },
+      });
+
+    if (error) {
+      throw new Error(`Failed to list Supabase Storage objects: ${error.message}`);
+    }
+
+    const filePaths: string[] = [];
+
+    for (const item of data ?? []) {
+      const itemPath = normalizedFolder ? `${normalizedFolder}/${item.name}` : item.name;
+      const isFolder = item.id === null;
+
+      if (isFolder) {
+        const nestedPaths = await this.collectBucketFilePaths(itemPath);
+        filePaths.push(...nestedPaths);
+        continue;
+      }
+
+      filePaths.push(itemPath);
+    }
+
+    return filePaths;
+  }
+
+  // Xóa tất cả file trong bucket. Sử dụng đệ quy để đảm bảo xóa cả file trong các folder con nếu có.
+  async clearBucketStorage(): Promise<number> {
+    try {
+      const filePaths = await this.collectBucketFilePaths();
+
+      if (filePaths.length === 0) {
+        this.logger.log(`Supabase bucket "${this.bucketName}" is already empty.`);
+        return 0;
+      }
+
+      for (let index = 0; index < filePaths.length; index += 100) {
+        const batch = filePaths.slice(index, index + 100);
+        const { error } = await this.supabaseClient.storage
+          .from(this.bucketName)
+          .remove(batch);
+
+        if (error) {
+          throw new Error(`Failed to remove files from Supabase Storage: ${error.message}`);
+        }
+      }
+
+      this.logger.log(`Deleted ${filePaths.length} file(s) from Supabase bucket "${this.bucketName}".`);
+      return filePaths.length;
+    } catch (error: any) {
+      this.logger.error(`Error clearing Supabase bucket "${this.bucketName}": ${error.message}`);
+      throw error;
+    }
+  }
 
   async uploadFile(folder: string, file: Express.Multer.File, userId?: string,): Promise<FileEntity> {
     try {

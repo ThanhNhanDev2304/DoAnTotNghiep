@@ -445,6 +445,347 @@ and another file, `google-auth.guard.ts`, in the lib/passport directory. with th
   export class GoogleAuthGuard extends AuthGuard('google') { }
 ```
 
+## 9 Send Email with Nodemailer and EJS Template
+
+- First, install the required libraries:
+```bash
+  npm install nodemailer ejs
+  npm install -D @types/nodemailer @types/ejs
+```
+
+- Create Email module using NestJS CLI:
+```bash
+  nest g module email
+  nest g service email
+  nest g controller email
+```
+
+- **Step 1: Create Email Module** (`email.module.ts`)
+
+The module should look like this:
+
+```typescript
+  import { Module } from '@nestjs/common';
+  import { EmailService } from './email.service';
+  import { EmailController } from './email.controller';
+
+  @Module({
+    controllers: [EmailController],
+    providers: [EmailService],
+    exports: [EmailService], // Export so other modules can use it
+  })
+  export class EmailModule {}
+```
+
+- **Step 2: Create Email Service** (`email.service.ts`)
+
+The service handles email sending with Nodemailer:
+
+```typescript
+  import { Injectable, Logger } from '@nestjs/common';
+  import { ConfigService } from '@nestjs/config';
+  import nodemailer from 'nodemailer';
+  import ejs from 'ejs';
+  import path from 'path';
+
+  @Injectable()
+  export class EmailService {
+      private readonly logger = new Logger(EmailService.name);
+      private readonly transporter: nodemailer.Transporter;
+      private readonly appName: string;
+      private readonly supportEmail: string;
+      private readonly fromEmail: string;
+
+      constructor(private readonly configService: ConfigService) {
+          const host = this.configService.get<string>('EMAIL_HOST');
+          const port = Number(this.configService.get<string>('EMAIL_PORT') || '587');
+          const authUser = this.configService.get<string>('EMAIL_AUTH_USER');
+          const authPass = this.configService.get<string>('EMAIL_AUTH_PASS');
+          this.fromEmail = this.configService.get<string>('EMAIL_FROM')!;
+          this.supportEmail = this.configService.get<string>('SUPPORT_EMAIL')!;
+          this.appName = this.configService.get<string>('APP_NAME') || 'Project UMC';
+
+          if (!host || !port || !authUser || !authPass || !this.fromEmail || !this.supportEmail) {
+              throw new Error('Missing email configuration in environment variables');
+          }
+
+          this.transporter = nodemailer.createTransport({
+              host,
+              port,
+              secure: false, // true for 465, false for other ports
+              auth: {
+                  user: authUser,
+                  pass: authPass,
+              },
+          });
+      }
+
+      // Send OTP verification email
+      async sendRegisterOtp(
+          email: string,
+          userName: string,
+          otp: string,
+          expireText: string,
+      ): Promise<void> {
+          const templatePath = path.join(
+              process.cwd(),
+              'src',
+              'email',
+              'templates',
+              'register-otp.ejs',
+          );
+          
+          // Render EJS template with data
+          const html = await ejs.renderFile(templatePath, {
+              appName: this.appName,
+              supportEmail: this.supportEmail,
+              userName,
+              otp,
+              expireText,
+          });
+
+          const info = await this.transporter.sendMail({
+              from: this.fromEmail,
+              to: email,
+              subject: `${this.appName} - OTP Verification`,
+              html,
+          });
+
+          this.logger.log(`OTP email sent successfully: ${info.messageId}`);
+      }
+
+      // Send test email (for verification)
+      async sendTestEmail(toEmail: string): Promise<void> {
+          const info = await this.transporter.sendMail({
+              from: this.fromEmail,
+              to: toEmail,
+              subject: `${this.appName} - Test Email`,
+              html: `
+                <div style="font-family:Arial,sans-serif;padding:24px">
+                  <h2>Test email sent successfully</h2>
+                  <p>If you received this email, your SMTP setup is working.</p>
+                </div>
+              `,
+          });
+
+          this.logger.log(`Test email sent successfully: ${info.messageId}`);
+      }
+  }
+```
+
+- **Step 3: Add Environment Variables** (`.env`)
+
+Add these configurations for email service:
+
+```env
+  EMAIL_HOST="smtp.gmail.com"
+  EMAIL_PORT=587
+  EMAIL_AUTH_USER="your_email@gmail.com"
+  EMAIL_AUTH_PASS="your_app_password"  # NOT your regular Gmail password
+  EMAIL_FROM="Project UMC <your_email@gmail.com>"
+  SUPPORT_EMAIL="support@yourdomain.com"
+  APP_NAME="Project UMC"
+```
+
+**To get Gmail App Password:**
+
+1. Go to [Google Account Security](https://myaccount.google.com/security)
+2. Enable `2-Step Verification`
+3. Find `App passwords`
+4. Select "Mail" and "Windows Computer" (or your OS)
+5. Copy the generated password to `EMAIL_AUTH_PASS`
+
+- **Step 4: Create DTOs** (`email/dto/create-email.dto.ts`)
+
+```typescript
+  import { ApiProperty } from '@nestjs/swagger';
+  import { IsEmail, IsNotEmpty } from 'class-validator';
+
+  export class SendEmailDto {
+    @ApiProperty({ description: 'Email address to receive test email', example: 'user@example.com' })
+    @IsEmail()
+    @IsNotEmpty()
+    toEmail!: string;
+  }
+
+  export class TestSendRegisterOtpDto {
+    @ApiProperty({ description: 'User email', example: 'user@example.com' })
+    @IsEmail()
+    @IsNotEmpty()
+    email!: string;
+
+    @ApiProperty({ description: 'Username', example: 'John Doe' })
+    @IsNotEmpty()
+    userName!: string;
+
+    @ApiProperty({ description: 'OTP code', example: '123456' })
+    @IsNotEmpty()
+    otp!: string;
+
+    @ApiProperty({ description: 'Expiration message', example: 'Code expires in 10 minutes' })
+    @IsNotEmpty()
+    expireText!: string;
+  }
+```
+
+- **Step 5: Create Email Controller** (`email.controller.ts`)
+
+```typescript
+  import { Body, Controller, Post } from '@nestjs/common';
+  import { EmailService } from './email.service';
+  import { Public } from '@/lib/decorator/metadata';
+  import { ApiOperation } from '@nestjs/swagger';
+  import { SendEmailDto, TestSendRegisterOtpDto } from './dto/create-email.dto';
+
+  @Controller('email')
+  export class EmailController {
+      constructor(private readonly emailService: EmailService) {}
+
+      @Public()
+      @ApiOperation({ summary: 'Send a test email to verify email configuration' })
+      @Post('test-email')
+      async testEmail(@Body() body: SendEmailDto) {
+          await this.emailService.sendTestEmail(body.toEmail);
+          return { message: 'Test email sent successfully' };
+      }
+
+      @Public()
+      @ApiOperation({ summary: 'Send a registration OTP email to a user' })
+      @Post('send-register-otp')
+      async sendRegisterOtp(@Body() body: TestSendRegisterOtpDto) {
+          await this.emailService.sendRegisterOtp(
+              body.email,
+              body.userName,
+              body.otp,
+              body.expireText,
+          );
+          return { message: 'Registration OTP email sent successfully' };
+      }
+  }
+```
+
+- **Step 6: Create EJS Email Template** (`email/templates/register-otp.ejs`)
+Create a folder named `email/templates/` and add the HTML email template, such as the register-otp.ejs file in the GitHub source.
+
+- **Step 7: Use Email Service in Auth Module**
+In your `auth.service.ts`, inject and use the EmailService:
+
+```typescript
+  import { EmailService } from '@/email/email.service';
+
+  @Injectable()
+  export class AuthService {
+      constructor(
+          private readonly emailService: EmailService,
+          // ... other dependencies
+      ) {}
+
+      async register(registerDto: RegisterDto): Promise<any> {
+          // Your registration logic...
+
+          // Generate OTP
+          const otp = generateNumericOtp(6);
+          const expireTime = ms(this.otpExpire) / 1000 / 60; // Convert to minutes
+
+          // Send OTP email
+          await this.emailService.sendRegisterOtp(
+              registerDto.email,
+              registerDto.userName,
+              otp,
+              `Mã OTP sẽ hết hạn sau ${expireTime} phút`,
+          );
+
+          // Rest of your logic...
+      }
+  }
+```
+
+- **Step 8: Test Email Configuration**
+
+Use Swagger or Postman to test:
+
+```http
+  POST /api/v1/email/test-email
+  Content-Type: application/json
+
+  {
+      "toEmail": "your_email@gmail.com"
+  }
+```
+
+Expected response:
+```json
+  {
+      "message": "Test email sent successfully"
+  }
+```
+
+- **Step 9: Creating Custom Email Templates**
+
+To create additional email templates:
+
+1. Create new `.ejs` file in `email/templates/`:
+   ```bash
+     email/templates/
+     ├── register-otp.ejs          # OTP verification
+     ├── password-reset.ejs        # Password reset (example)
+     └── welcome.ejs               # Welcome email (example)
+   ```
+
+2. Add method in `EmailService`:
+   ```typescript
+     async sendPasswordReset(email: string, resetLink: string): Promise<void> {
+         const templatePath = path.join(
+             process.cwd(),
+             'src',
+             'email',
+             'templates',
+             'password-reset.ejs',
+         );
+
+         const html = await ejs.renderFile(templatePath, {
+             appName: this.appName,
+             supportEmail: this.supportEmail,
+             resetLink,
+         });
+
+         await this.transporter.sendMail({
+             from: this.fromEmail,
+             to: email,
+             subject: `${this.appName} - Reset Your Password`,
+             html,
+         });
+     }
+   ```
+
+3. Call in appropriate service (e.g., AuthService for password reset)
+
+- **Step 10: Email Module Import**
+
+Make sure EmailModule is imported in `app.module.ts`:
+
+```typescript
+  import { EmailModule } from '@/email/email.module';
+
+  @Module({
+    imports: [
+      // ... other modules
+      EmailModule,
+    ],
+  })
+  export class AppModule {}
+```
+
+**Key Points:**
+
+- Email service uses Nodemailer for SMTP configuration
+- EJS templates allow dynamic content injection
+- OTP emails include expiration time and support contact
+- Test email endpoint helps verify SMTP setup
+- Templates follow Apple-style email design for better appearance
+- Service is exported from module for use in other modules
+- All email methods are logged for debugging
+
 
 
 

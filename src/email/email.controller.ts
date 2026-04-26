@@ -2,7 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { Public } from '@/lib/decorator/metadata';
 import { ApiOperation } from '@nestjs/swagger';
-import { SendEmailDto } from './dto/create-email.dto';
+import { SendEmailDto, TestSendRegisterOtpDto } from './dto/create-email.dto';
 
 @Controller('email')
 export class EmailController {
@@ -16,5 +16,13 @@ export class EmailController {
     async testEmail(@Body() body: SendEmailDto) {
         const result = await this.emailService.sendTestEmail(body.toEmail);
         return { message: 'Test email sent successfully', result };
+    }
+
+    @Public()
+    @ApiOperation({ summary: 'Send a registration OTP email to a user' })
+    @Post('send-register-otp')
+    async sendRegisterOtp(@Body() body: TestSendRegisterOtpDto) {
+        await this.emailService.sendRegisterOtp(body.email, body.userName, body.otp, body.expireText);
+        return { message: 'Registration OTP email sent successfully' };
     }
 }

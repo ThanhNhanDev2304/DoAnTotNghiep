@@ -65,4 +65,18 @@ export class JobsService {
             this.logger.error(`Error handling expired sessions: ${error.message}`);
         }
     }
+
+
+    @Cron(CronExpression.EVERY_MINUTE, {
+        name: 'cleanupExpiredPendingRegistrations',
+        waitForCompletion: true,
+    })
+    async cleanupExpiredPendingRegistrations() {
+        await this.prisma.pendingRegistration.deleteMany({
+            where: {
+                otpExpiresAt: { lt: new Date() },
+            },
+        });
+    }
+
 }

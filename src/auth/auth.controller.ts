@@ -10,6 +10,7 @@ import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
 import { GoogleAuthGuard } from '@/lib/passport/google-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation } from '@nestjs/swagger';
+import { VerifyRegisterOtpDto } from '@/auth/dto/verify-register-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,19 +32,27 @@ export class AuthController {
     async register(
         @Body() registerDto: RegisterDto,
         @Res({ passthrough: true }) res: Response
-     ) {
-        const newAccount = await this.authService.register(registerDto);
+    ) {
+        const Otp = await this.authService.register_2FA(registerDto);
         return {
-            message: 'User registered successfully',
-            result: newAccount,
+            message: 'Registration initiated successfully. Please verify the OTP sent to your email to complete registration.',
+            otpPreview: Otp, // In production, you would not return the OTP or any sensitive information. This is just for demonstration.
         };
     }
+
+    @Public()
+    @Post('verify-register-otp')
+    @ApiOperation({ summary: 'Verify OTP and complete account registration' })
+    async verifyRegisterOtp(@Body() verifyRegisterOtpDto: VerifyRegisterOtpDto) {
+        return await this.authService.verifyRegisterOtp(verifyRegisterOtpDto);
+    }
+
 
     @Public()
     @UseGuards(LocalAuthGuard) // Apply the local authentication guard to this route
     @ApiOperation({ summary: 'Login a user for a session and cookie management' }) // Add Swagger documentation for this endpoint
     @Post('login')
-    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto ) {
+    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto) {
         const result = await this.authService.login(user, res, loginDto.deviceId);
         return {
             message: 'Login successful',
@@ -56,7 +65,7 @@ export class AuthController {
     @Public()
     @ApiOperation({ summary: 'Refresh access token using a valid refresh token stored in cookies' }) // Add Swagger documentation for this endpoint
     @Post('refresh')
-    async refreshToken(@Res({ passthrough: true }) res: Response, @Req() req: Request ){
+    async refreshToken(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
         const oldCookieRefreshToken = req.cookies[this.refreshTokenName];
         if (!oldCookieRefreshToken) {
             throw new BadRequestException('Refresh token is missing in cookies');
@@ -74,9 +83,9 @@ export class AuthController {
     async getProfile(@User() user: UserEntity) {
         try {
             return {
-            message: 'Profile retrieved successfully',
-            user: user,
-        };
+                message: 'Profile retrieved successfully',
+                user: user,
+            };
         } catch (error) {
             throw new BadRequestException('Failed to retrieve profile', (error as Error).message);
         }
@@ -119,12 +128,12 @@ export class AuthController {
     ) {
         // Thực tế có thể lưu deviceId vào cookie trước khi gọi /auth/google và lấy ra ở đây.
         const deviceId = req.cookies['deviceId'];
-        if(!deviceId){
+        if (!deviceId) {
             throw new BadRequestException('Device id is missing in cookies');
         }
 
         const result = await this.authService.googleLogin(googleUser, res, deviceId);
-        
+
         // Sau khi đăng nhập thành công, bạn thường sẽ muốn redirect người dùng về giao diện Frontend
         // Ví dụ: return res.redirect('http://localhost:3000/dashboard');
         return {

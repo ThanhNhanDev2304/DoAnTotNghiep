@@ -7,12 +7,14 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto, RegisterDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { comparePassword } from '@/lib/bcrypt/bcrypt';
+import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { UserEntity } from '@/users/entities/user.entity';
 import type { Response } from 'express';
 import ms from 'ms';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
+import { generateNumericOtp } from '@/lib/otp/generate-otp';
+import { VerifyRegisterOtpDto } from './dto/verify-register-otp.dto';
 
 @Injectable()
 export class AuthService {
@@ -21,8 +23,11 @@ export class AuthService {
     private readonly expiresInRefresh: string;
     private readonly refreshTokenSecret: string;
     private readonly defaultRoleName: string;
+    private readonly saltRounds: number;
     private readonly otpExpire: string;
     private readonly otpLength: number;
+    private readonly otpMaxAttempts: number;
+
 
     constructor(
         private readonly prismaService: PrismaService,
@@ -35,10 +40,11 @@ export class AuthService {
         this.refreshTokenName = this.configService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
         this.expiresInRefresh = this.configService.get<string>('JWT_REFRESH_EXPIRE')!;
         this.refreshTokenSecret = this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')!;
+        this.saltRounds = Number(this.configService.get<string>('BCRYPT_SALT_ROUNDS') || '10');
 
-        this.otpExpire = this.configService.get<string>('OTP_EXPIRE') || '5m';
-        this.otpLength = Number(this.configService.get<string>('OTP_LENGTH') || '6');
-
+        this.otpExpire = this.configService.get<string>('OTP_EXPIRE')!;
+        this.otpLength = Number(this.configService.get<string>('OTP_LENGTH'));
+        this.otpMaxAttempts = Number(this.configService.get<string>('OTP_MAX_ATTEMPTS'));
         if (!this.refreshTokenName || this.refreshTokenName.trim() === '') {
             throw new Error('Refresh token cookie name is not defined in environment variables');
         }
@@ -51,23 +57,181 @@ export class AuthService {
         if (!this.otpExpire || this.otpExpire.trim() === '') {
             throw new Error('OTP_EXPIRE is not defined in environment variables');
         }
-        if (!Number.isInteger(this.otpLength) || this.otpLength < 4) {
-            throw new Error('OTP_LENGTH must be an integer >= 4');
+        if (!this.otpLength || !Number.isInteger(this.otpLength) || this.otpLength < 4) {
+            throw new Error('OTP_LENGTH is not defined or must be an integer >= 4');
+        }
+        if (!this.otpMaxAttempts || !Number.isInteger(this.otpMaxAttempts) || this.otpMaxAttempts <= 0) {
+            throw new Error('OTP_MAX_ATTEMPTS is not defined or must be a positive integer in environment variables');
         }
 
         this.defaultRoleName = this.configService.get<string>('NAME_ROLE_USER') || 'USER';
     }
 
-    async register_2FA(registerDto: RegisterDto) {
+    async register_2FA(registerDto: RegisterDto): Promise<string> {
         try {
+            const now = new Date();
             const { userName, email, password } = registerDto;
+
             const existedUser = await this.usersService.checkEmailOrUsernameExists(email, userName);
+            if (existedUser.exists) {
+                if (existedUser.field === 'email') {
+                    throw new BadRequestException('Email already exists');
+                }
+                throw new BadRequestException('Username already exists');
+            }
+
+            const pendingByEmail = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+            const pendingByUsername = await this.prismaService.pendingRegistration.findUnique({ where: { userName } });
+            if (pendingByEmail && pendingByEmail.otpExpiresAt <= now) {
+                await this.prismaService.pendingRegistration.delete({
+                    where: { email: pendingByEmail.email },
+                });
+            }
+            if (pendingByUsername && pendingByUsername.otpExpiresAt <= now && pendingByUsername.email !== email) {
+                await this.prismaService.pendingRegistration.delete({
+                    where: { email: pendingByUsername.email },
+                });
+            }
+
+            const activePendingByEmail = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+            const activePendingByUsername = await this.prismaService.pendingRegistration.findUnique({ where: { userName } });
+            if (activePendingByEmail || activePendingByUsername) {
+                throw new BadRequestException(`A pending registration with this ${activePendingByEmail ? 'email' : 'username'} already exists. Please verify OTP or wait until it expires.`);
+            }
+
+            const passwordHash = await generatePasswordHash(password, this.saltRounds);
+            const otp = generateNumericOtp(this.otpLength);
+            const otpHash = await generatePasswordHash(otp, this.saltRounds);
+            const otpExpiresAt = new Date(
+                Date.now() + ms(this.otpExpire as ms.StringValue),
+            );
+
+            await this.prismaService.pendingRegistration.upsert({
+                where: { email },
+                update: {
+                    userName, passwordHash, otpHash, otpExpiresAt,
+                    attemptCount: 0, // Reset attempt count and resendAfter on new registration or when re-registering after expiration
+                    resendAfter: null,
+                },
+                create: {
+                    email, userName, passwordHash, otpHash, otpExpiresAt,
+                    attemptCount: 0,
+                    resendAfter: null,
+                },
+            });
+
+            return otp;
         } catch (error: any) {
-            
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new BadRequestException('Failed to register user', error.message);
         }
     }
 
 
+    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<{ message: string; result: UserEntity }> {
+        try {
+            const { email, otp } = verifyRegisterOtpDto;
+            if (otp.length !== this.otpLength) {
+                throw new BadRequestException(`OTP must be exactly ${this.otpLength} digits`);
+            }
+
+
+            const pendingRegistration = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+            if (!pendingRegistration) {
+                throw new BadRequestException('No pending registration found for this email');
+            }
+            if (pendingRegistration.otpExpiresAt <= new Date()) {
+                throw new BadRequestException('OTP has expired');
+            }
+            if (pendingRegistration.attemptCount >= this.otpMaxAttempts) {
+                throw new BadRequestException(
+                    `OTP has been locked because too many incorrect attempts were made. Maximum allowed attempts is ${this.otpMaxAttempts}. Please request a new OTP after ${this.otpExpire} to continue.`,
+                );
+            }
+            const isOtpValid = await comparePassword(
+                otp,
+                pendingRegistration.otpHash,
+            );
+
+            if (!isOtpValid) {
+                const updatedPendingRegistration = await this.prismaService.pendingRegistration.update({
+                    where: { email: pendingRegistration.email },
+                    data: {
+                        attemptCount: {
+                            increment: 1,
+                        },
+                    },
+                });
+
+                const remainingAttempts = this.otpMaxAttempts - updatedPendingRegistration.attemptCount;
+
+                if (remainingAttempts <= 0) {
+                    throw new BadRequestException('OTP has been locked because too many incorrect attempts were made.');
+                }
+                throw new BadRequestException(
+                    `Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`,
+                );
+            }
+
+            const existedUser = await this.prismaService.user.findFirst({
+                where: {
+                    OR: [
+                        { email: pendingRegistration.email },
+                        { userName: pendingRegistration.userName },
+                    ],
+                },
+            });
+
+            if (existedUser) {
+                throw new BadRequestException(
+                    'User already exists with this email or username',
+                );
+            }
+
+            const defaultRole = await this.prismaService.role.findUnique({
+                where: {
+                    roleName: this.defaultRoleName,
+                },
+            });
+            if (!defaultRole) {
+                throw new BadRequestException('Default role not found');
+            }
+            const createdUser = await this.prismaService.$transaction(async (tx) => {
+                const newUser = await tx.user.create({
+                    data: {
+                        email: pendingRegistration.email,
+                        userName: pendingRegistration.userName,
+                        password: pendingRegistration.passwordHash,
+                        roleId: defaultRole.id,
+                        accountType: 'local',
+                    },
+                });
+
+                await tx.pendingRegistration.delete({
+                    where: { email: pendingRegistration.email },
+                });
+
+                return newUser;
+            });
+
+            return {
+                message: 'Account verified and created successfully',
+                result: plainToInstance(UserEntity, createdUser, {
+                    excludeExtraneousValues: false,
+                }),
+            };
+        } catch (error: any) {
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new BadRequestException(
+                'Failed to verify registration OTP',
+                error.message,
+            );
+        }
+    }
 
 
     private async generateRefreshToken(payload: { userId: string; _sub: string, deviceId: string }): Promise<string> {
@@ -99,22 +263,22 @@ export class AuthService {
         return plainToInstance(UserEntity, { ...user, roleName: getRoleUser ? getRoleUser.roleName : null }, { excludeExtraneousValues: false });
     }
 
-    async register(registerDto: RegisterDto) {
-        try {
-            const { userName, email, password } = registerDto;
-            const CreateUserDto: CreateUserDto = {
-                email,
-                userName,
-                password,
-                roleName: this.defaultRoleName
-            };
-            const result = await this.usersService.create(CreateUserDto);
-            return result;
-        } catch (error: any) {
-            console.error('Error registering user:', error);
-            throw new BadRequestException('Failed to register user', error.message);
-        }
-    }
+    // async register(registerDto: RegisterDto) {
+    //     try {
+    //         const { userName, email, password } = registerDto;
+    //         const CreateUserDto: CreateUserDto = {
+    //             email,
+    //             userName,
+    //             password,
+    //             roleName: this.defaultRoleName
+    //         };
+    //         const result = await this.usersService.create(CreateUserDto);
+    //         return result;
+    //     } catch (error: any) {
+    //         console.error('Error registering user:', error);
+    //         throw new BadRequestException('Failed to register user', error.message);
+    //     }
+    // }
 
     async login(user: UserEntity, res: Response, deviceId: string): Promise<{ accessToken: string; user: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> }> {
         try {
@@ -198,7 +362,7 @@ export class AuthService {
          * -> không cho login bằng Google trực tiếp
          */
         if (user && user.accountType === 'local') {
-            throw new BadRequestException('This email address has already been registered with Google.',);
+            throw new BadRequestException('This email is already associated with a local account. Please sign in using your email and password instead of Google Login.');
         }
 
         /**

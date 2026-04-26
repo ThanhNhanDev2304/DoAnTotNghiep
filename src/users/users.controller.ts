@@ -54,18 +54,21 @@ export class UsersController {
         type: 'string',
         format: 'binary',
       },
-      type: {
+      typeImg: {
         type: 'string',
         enum: ['avatar', 'background'],
       },
     },
-    required: ['imgProfile', 'type'],
+    required: ['imgProfile', 'typeImg'],
   },
 })
   @UseInterceptors(FileInterceptor('imgProfile')) // Tên trường file trong form-data phải trùng với tên này
   async updateAvatar(@Param('id') id: string, @UploadedFile() imgProfile: Express.Multer.File, @Body() updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto): Promise<{ message: string; result: UserEntity }> {
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
     const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+    if (!imgProfile) {
+      throw new BadRequestException('Image file is required. Please upload an image file for avatar or background.');
+    }
     if (!allowedMimeTypes.includes(imgProfile.mimetype)) {
       throw new BadRequestException('Invalid file type. Only JPEG, JPG, PNG, WEBP, and GIF images are allowed.');
     }

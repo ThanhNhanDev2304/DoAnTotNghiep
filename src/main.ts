@@ -9,21 +9,34 @@ import { JwtAuthGuard } from '@/lib/passport/jwt-auth.guard';
 import { setupCors } from '@/config/cors.config';
 import { validationConfig } from '@/config/validation.config';
 import { setupAppConfig } from '@/config/app.config';
+import { LoggingInterceptor } from '@/common/interceptors/logging.interceptor';
+import { TransformInterceptor } from '@/common/interceptors/transform.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService: ConfigService = app.get(ConfigService);
   const reflector: Reflector = app.get(Reflector);
 
+  // Apply Global ClassSerializerInterceptor to use Entity classes for response transformation
+  app.useGlobalInterceptors(
+    new ClassSerializerInterceptor(reflector),
+    new LoggingInterceptor(),
+    new TransformInterceptor()
+  );
+
+  // Apply Global Exception Filter to handle all uncaught exceptions in a centralized manner
+  app.useGlobalFilters(
+    new AllExceptionsFilter()
+  );
+
   if (configService.get<string>('MODE') === 'development') {
     ConfigSwagger.setup(app);
     console.log('Swagger documentation is enabled in development mode');
-  }
+  };
 
   // setup the versioning and global prefix for all routes
   const { globalPrefix, version } = setupAppConfig(app);
-  // Apply Global ClassSerializerInterceptor to use Entity classes for response transformation
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
   // Custom Validation Pipe with error formatting and automatic transformation
   validationConfig(app);

@@ -1,14 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UpdateUserAvatarOrBGDto, UpdateUserDto, UserImageType } from '@/users/dto/update-user.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UserEntity } from '@/users/entities/user.entity';
 import { RoleService } from '@/role/role.service';
 import { ConfigService } from '@nestjs/config';
-import { ensurePasswordHash, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
+import { ensurePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { FilesService } from '@/files/files.service';
+import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
 
 @Injectable()
 export class UsersService {
@@ -61,15 +62,15 @@ export class UsersService {
       const checkEmailOrUsername = await this.checkEmailOrUsernameExists(createUserDto.email, createUserDto.userName);
       if (checkEmailOrUsername.exists) {
         if (checkEmailOrUsername.field === 'email') {
-          throw new BadRequestException('Email already exists');
+          throw new ConflictException('Email already exists');
         }
         if (checkEmailOrUsername.field === 'username') {
-          throw new BadRequestException('Username already exists');
+          throw new ConflictException('Username already exists');
         }
       }
       const roleId: (string | null) = await this.roleService.findRoleIdByName(createUserDto.roleName || this.configService.get<string>('NAME_ROLE_USER') || 'USER');
       if (!roleId || roleId === null) {
-        throw new BadRequestException('Role not found');
+        throw new NotFoundException('Role not found');
       }
       const saltRounds = parseInt(this.configService.get<string>('BCRYPT_SALT_ROUNDS') || '10', 10);
       const newUser = await this.prisma.user.create({
@@ -83,12 +84,12 @@ export class UsersService {
       return newUser ? plainToInstance(UserEntity, newUser, { excludeExtraneousValues: false }) : new UserEntity();
     } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new BadRequestException(`Error creating user: ${error.message}`);
+        throw new ConflictException(`Error creating user: ${error.message}`);
       }
-      if (error instanceof BadRequestException) {
+      if (error instanceof ConflictException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to create user: ${error.message}`);
+      throw new InternalServerException(`Failed to create user: ${error.message}`);
     }
   }
 
@@ -98,9 +99,9 @@ export class UsersService {
       return listUsers ? listUsers.map(user => plainToInstance(UserEntity, user, { excludeExtraneousValues: false })) : [];
     } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new BadRequestException('Database error: ' + error.message);
+        throw new NotFoundException('Database error: ' + error.message);
       }
-      throw new BadRequestException('Error fetching users', error.message);
+      throw new InternalServerException(error.message);
     }
   }
 
@@ -110,11 +111,11 @@ export class UsersService {
         where: { id },
       });
       if (!user) {
-        throw new BadRequestException(`User with ID ${id} not found`);
+        throw new NotFoundException(`User with ID ${id} not found`);
       }
       return plainToInstance(UserEntity, user, { excludeExtraneousValues: false });
     } catch (error: any) {
-      throw new BadRequestException('Error fetching user', error.message);
+      throw new InternalServerException(error.message);
     }
   }
 
@@ -124,16 +125,16 @@ export class UsersService {
         where: { id },
       });
       if (!user) {
-        throw new BadRequestException(`User with ID ${id} not found`);
+        throw new NotFoundException(`User with ID ${id} not found`);
       }
       const checkResult = await this.checkEmailOrUsernameExists( updateUserDto.email || user.email, updateUserDto.userName || user.userName, id );
 
       // Fix: Check exists property, not the object itself
       if (checkResult.exists) {
         if (checkResult.field === 'email') {
-          throw new BadRequestException('Email already exists');
+          throw new ConflictException('Email already exists');
         }
-        throw new BadRequestException('Username already exists');
+        throw new ConflictException('Username already exists');
       }
       const updatedUser = await this.prisma.user.update({
         where: { id },
@@ -141,7 +142,7 @@ export class UsersService {
       });
       return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
     } catch (error: any) {
-      throw new BadRequestException('Error updating user', error.message);
+      throw new InternalServerException(error.message);
     }
   }
 
@@ -151,14 +152,14 @@ export class UsersService {
         where: { id },
       });
       if (!user) {
-        throw new BadRequestException(`User with ID ${id} not found`);
+        throw new NotFoundException(`User with ID ${id} not found`);
       }
       await this.prisma.user.delete({
         where: { id },
       });
       return plainToInstance(UserEntity, user, { excludeExtraneousValues: false });
     } catch (error: any) {
-      throw new BadRequestException('Error removing user', error.message);
+      throw new InternalServerException(error.message);
     }
   }
 
@@ -168,10 +169,10 @@ export class UsersService {
         where: { id },
       });
       if (!user) {
-        throw new BadRequestException(`User with ID ${id} not found`);
+        throw new NotFoundException(`User with ID ${id} not found`);
       }
       if (!fileAvatar) {
-        throw new BadRequestException('No file uploaded');
+        throw new ValidationException('No file uploaded');
       }
       const uploadedFile = await this.filesService.uploadSingleFile(`users/${id}/profile`, updateUserAvatarOrBGDto.typeImg, fileAvatar, id);
       const updatedUser = await this.prisma.user.update({
@@ -184,7 +185,7 @@ export class UsersService {
 
     } catch (error: any) {
       console.error('Error updating user avatar:', error);
-      throw new BadRequestException('Error updating user avatar', error.message);
+      throw new InternalServerException(error.message);
     }
   }
 }

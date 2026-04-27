@@ -1,10 +1,10 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { SessionService } from '@/session/session.service';
 import { UsersService } from '@/users/users.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { LoginDto, RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
+import {  RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
@@ -12,9 +12,10 @@ import { UserEntity } from '@/users/entities/user.entity';
 import type { Response } from 'express';
 import ms from 'ms';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
-import { generateNumericOtp } from '@/lib/otp/generate-otp';
+import { generateNumericOtp } from '@/common/otp/generate-otp';
 import { EmailService } from '@/email/email.service';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
+import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 
 @Injectable()
 export class AuthService {
@@ -76,9 +77,9 @@ export class AuthService {
             const existedUser = await this.usersService.checkEmailOrUsernameExists(email, userName);
             if (existedUser.exists) {
                 if (existedUser.field === 'email') {
-                    throw new BadRequestException('Email already exists');
+                    throw new ConflictException('Email already exists');
                 }
-                throw new BadRequestException('Username already exists');
+                throw new ConflictException('Username already exists');
             }
 
             const pendingByEmail = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
@@ -97,7 +98,7 @@ export class AuthService {
             const activePendingByEmail = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
             const activePendingByUsername = await this.prismaService.pendingRegistration.findUnique({ where: { userName } });
             if (activePendingByEmail || activePendingByUsername) {
-                throw new BadRequestException(`A pending registration with this ${activePendingByEmail ? 'email' : 'username'} already exists. Please verify OTP or wait until it expires.`);
+                throw new ConflictException(`A pending registration with this ${activePendingByEmail ? 'email' : 'username'} already exists. Please verify OTP or wait until it expires.`);
             }
 
             const passwordHash = await generatePasswordHash(password, this.saltRounds);
@@ -130,7 +131,7 @@ export class AuthService {
                         email: pendingRegistration.email,
                     },
                 });
-                throw new BadRequestException(
+                throw new ConflictException(
                     'Failed to send OTP email. Please try registering again.',
                 );
             }
@@ -138,31 +139,31 @@ export class AuthService {
             console.log(`Generated OTP for ${email}: ${otp} (expires at ${otpExpiresAt.toISOString()})`); // Log OTP for testing purposes. Remove in production.
             return otp;
         } catch (error: any) {
-            if (error instanceof BadRequestException) {
+            if (error instanceof ConflictException) {
                 throw error;
             }
-            throw new BadRequestException('Failed to register user', error.message);
+            throw new InternalServerException(`Failed to register user: ${error.message}`);
         }
     }
 
 
-    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<{ message: string; result: UserEntity }> {
+    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<IApiResponse<UserEntity>> {
         try {
             const { email, otp } = verifyRegisterOtpDto;
             if (otp.length !== this.otpLength) {
-                throw new BadRequestException(`OTP must be exactly ${this.otpLength} digits`);
+                throw new ConflictException(`OTP must be exactly ${this.otpLength} digits`);
             }
 
 
             const pendingRegistration = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
             if (!pendingRegistration) {
-                throw new BadRequestException('No pending registration found for this email');
+                throw new ConflictException('No pending registration found for this email');
             }
             if (pendingRegistration.otpExpiresAt <= new Date()) {
-                throw new BadRequestException('OTP has expired');
+                throw new ConflictException('OTP has expired');
             }
             if (pendingRegistration.attemptCount >= this.otpMaxAttempts) {
-                throw new BadRequestException(
+                throw new ConflictException(
                     `OTP has been locked because too many incorrect attempts were made. Maximum allowed attempts is ${this.otpMaxAttempts}. Please request a new OTP after ${this.otpExpire} to continue.`,
                 );
             }
@@ -184,11 +185,9 @@ export class AuthService {
                 const remainingAttempts = this.otpMaxAttempts - updatedPendingRegistration.attemptCount;
 
                 if (remainingAttempts <= 0) {
-                    throw new BadRequestException('OTP has been locked because too many incorrect attempts were made.');
+                    throw new ConflictException('OTP has been locked because too many incorrect attempts were made.');
                 }
-                throw new BadRequestException(
-                    `Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`,
-                );
+                throw new ConflictException(`Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.` );
             }
 
             const existedUser = await this.prismaService.user.findFirst({
@@ -201,9 +200,7 @@ export class AuthService {
             });
 
             if (existedUser) {
-                throw new BadRequestException(
-                    'User already exists with this email or username',
-                );
+                throw new ConflictException('User already exists with this email or username' );
             }
 
             const defaultRole = await this.prismaService.role.findUnique({
@@ -212,7 +209,7 @@ export class AuthService {
                 },
             });
             if (!defaultRole) {
-                throw new BadRequestException('Default role not found');
+                throw new NotFoundException('Default role not found');
             }
             const createdUser = await this.prismaService.$transaction(async (tx) => {
                 const newUser = await tx.user.create({
@@ -233,19 +230,17 @@ export class AuthService {
             });
 
             return {
+                statusCode: 201,
                 message: 'Account verified and created successfully',
-                result: plainToInstance(UserEntity, createdUser, {
+                data: plainToInstance(UserEntity, createdUser, {
                     excludeExtraneousValues: false,
                 }),
             };
         } catch (error: any) {
-            if (error instanceof BadRequestException) {
+            if (error instanceof ConflictException || error instanceof NotFoundException) {
                 throw error;
             }
-            throw new BadRequestException(
-                'Failed to verify registration OTP',
-                error.message,
-            );
+            throw new InternalServerException( `Failed to verify registration OTP: ${error.message}` );
         }
     }
 
@@ -254,7 +249,7 @@ export class AuthService {
         const expiresIn = this.expiresInRefresh;
         const secret = this.refreshTokenSecret;
         if (!expiresIn || !secret) {
-            throw new Error('JWT refresh token or secret is not defined in environment variables');
+            throw new NotFoundException('JWT refresh token or secret is not defined in environment variables');
         }
         const expiresInMs: number = ms(expiresIn as ms.StringValue) / 1000; // Convert to seconds for JWT
         return this.jwtService.sign(payload, { expiresIn: expiresInMs, secret: secret });
@@ -266,10 +261,10 @@ export class AuthService {
             return null;
         }
         if (user.accountType !== 'local') {
-            throw new BadRequestException('This account uses Google Sign-In',);
+            throw new ConflictException('This account uses Google Sign-In',);
         }
         if (!user.password) {
-            throw new BadRequestException('This account does not support password login');
+            throw new ConflictException('This account does not support password login');
         }
         const authPass = await comparePassword(password, user.password);
         if (!authPass) {
@@ -306,7 +301,7 @@ export class AuthService {
             };
             const setSessionDB = await this.sessionService.upsertSession(createSessionDto);
             if (!setSessionDB) {
-                throw new BadRequestException('Failed to create or update session in database');
+                throw new ConflictException('Failed to create or update session in database');
             }
             const expiresInRefreshToken = this.expiresInRefresh;
             if (!expiresInRefreshToken) {
@@ -331,32 +326,32 @@ export class AuthService {
             }
             return { accessToken: this.jwtService.sign(payload), user: payload };
         } catch (error) {
-            throw new BadRequestException('Failed to login user', (error as Error).message);
+            throw new InternalServerException(`Failed to login user: ${(error as Error).message}`);
         }
     }
 
     async refreshToken(oldCookieRefreshToken: string, res: Response) {
         try {
             if (!oldCookieRefreshToken || oldCookieRefreshToken.trim() === '' || oldCookieRefreshToken === 'undefined') {
-                throw new BadRequestException('Refresh token is missing !');
+                throw new ValidationException('Refresh token is missing !');
             }
             const decodedRefreshToken = this.jwtService.verify(oldCookieRefreshToken, { secret: this.refreshTokenSecret });
             if (!decodedRefreshToken || typeof decodedRefreshToken === 'string' || !decodedRefreshToken.userId || !decodedRefreshToken._sub || !decodedRefreshToken.deviceId) {
-                throw new BadRequestException('Invalid refresh token payload');
+                throw new ValidationException('Invalid refresh token payload');
             }
             const session = await this.sessionService.findSessionByRefreshTokenAndDeviceId(oldCookieRefreshToken, decodedRefreshToken.deviceId);
             if (!session) {
-                throw new BadRequestException('Invalid refresh token or session not found');
+                throw new ValidationException('Invalid refresh token or session not found');
             }
             const userFetch = await this.prismaService.user.findUnique({ where: { id: session.userId }, include: { role: true } });
             if (!userFetch || userFetch.id !== decodedRefreshToken.userId) {
-                throw new BadRequestException('User not found for the given refresh token');
+                throw new ValidationException('User not found for the given refresh token');
             }
             const userEntity = plainToInstance(UserEntity, { ...userFetch, roleName: userFetch.role ? userFetch.role.roleName : null }, { excludeExtraneousValues: false });
             res.clearCookie(this.refreshTokenName); // Clear old refresh token cookie
             return await this.login(userEntity, res, decodedRefreshToken.deviceId); // Reuse login logic to generate new tokens and set cookie
         } catch (error: any) {
-            throw new BadRequestException('Failed to refresh token', error.message);
+            throw new InternalServerException(`Failed to refresh token: ${error.message}`);
         }
     }
 
@@ -378,7 +373,7 @@ export class AuthService {
          * -> không cho login bằng Google trực tiếp
          */
         if (user && user.accountType === 'local') {
-            throw new BadRequestException('This email is already associated with a local account. Please sign in using your email and password instead of Google Login.');
+            throw new ConflictException('This email is already associated with a local account. Please sign in using your email and password instead of Google Login.');
         }
 
         /**
@@ -391,7 +386,7 @@ export class AuthService {
                 },
             });
             if (!defaultRole) {
-                throw new BadRequestException(
+                throw new NotFoundException(
                     'Default role not found',
                 );
             }
@@ -458,16 +453,16 @@ export class AuthService {
         try {
             const decodedRefreshToken = this.jwtService.verify(oldCookieRefreshToken, { secret: this.refreshTokenSecret });
             if (!decodedRefreshToken || typeof decodedRefreshToken === 'string' || !decodedRefreshToken.userId || !decodedRefreshToken._sub || !decodedRefreshToken.deviceId) {
-                throw new BadRequestException('Invalid refresh token payload');
+                throw new ValidationException('Invalid refresh token payload');
             }
             const result = await this.sessionService.deleteSessionByDeviceId(user.id, decodedRefreshToken.deviceId);
             if (!result) {
-                throw new BadRequestException('Failed to delete session for the given device');
+                throw new ValidationException('Failed to delete session for the given device');
             }
             res.clearCookie(this.refreshTokenName); // Clear refresh token cookie on logout
             return result;
         } catch (error: any) {
-            throw new BadRequestException('Failed to logout user', error.message);
+            throw new InternalServerException(`Failed to logout user: ${error.message}`);
         }
     }
 
@@ -475,12 +470,12 @@ export class AuthService {
         try {
             const result = await this.sessionService.deleteSessionsByUserId(user.id);
             if (!result) {
-                throw new BadRequestException('Failed to delete sessions for the given user');
+                throw new ValidationException('Failed to delete sessions for the given user');
             }
             res.clearCookie(this.refreshTokenName); // Clear refresh token cookie on logout
             return result;
         } catch (error: any) {
-            throw new BadRequestException('Failed to logout user from all sessions', error.message);
+            throw new InternalServerException(`Failed to logout user from all sessions: ${error.message}`);
         }
     }
 }

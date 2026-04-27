@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
 import { RoleEntity } from '@/role/entities/role.entity';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { InternalServerException, NotFoundException, ConflictException, ValidationException } from '@/common/exceptions/app.exception';
 
 @Injectable()
 export class RoleService {
@@ -19,9 +20,9 @@ export class RoleService {
     }
     catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new BadRequestException('Database error: ' + error.message);
+        throw new NotFoundException('Role not found');
       }
-      throw new BadRequestException('Failed to find role: ' + error.message);
+      throw new NotFoundException('Failed to find role: ' + error.message);
     }
   }
 
@@ -33,13 +34,10 @@ export class RoleService {
       // Transform to Entity instance (for @Expose() and @Type() to work)
       return newRole ? plainToInstance(RoleEntity, newRole, { excludeExtraneousValues: false }) : new RoleEntity();
     } catch (error: any) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new BadRequestException('Role name already exists');
+        throw new NotFoundException('Role name already exists');
       }
-      throw new BadRequestException('Failed to create role: ' + error.message);
+      throw new InternalServerException('Failed to create role: ' + error.message);
     }
   }
 
@@ -51,7 +49,7 @@ export class RoleService {
       // Transform to Entity instances (for @Expose() and @Exclude() to work)
       return roles.map(role => plainToInstance(RoleEntity, role, { excludeExtraneousValues: false }));
     } catch (error: any) {
-      throw new BadRequestException('Failed to retrieve roles: ' + error.message);
+      throw new InternalServerException('Failed to retrieve roles: ' + error.message);
     }
   }
 
@@ -69,7 +67,7 @@ export class RoleService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException('Failed to retrieve role: ' + error.message);
+      throw new InternalServerException('Failed to retrieve role: ' + error.message);
     }
   }
 
@@ -87,7 +85,7 @@ export class RoleService {
           where: { roleName: updateRoleDto.roleName },
         });
         if (existingRole) {
-          throw new BadRequestException('Role name already exists');
+          throw new NotFoundException('Role name already exists');
         }
       }
 
@@ -97,10 +95,10 @@ export class RoleService {
       });
       return plainToInstance(RoleEntity, updatedRole, { excludeExtraneousValues: false });
     } catch (error: any) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (error instanceof ConflictException || error instanceof NotFoundException || error instanceof ValidationException) {
         throw error;
       }
-      throw new BadRequestException('Failed to update role: ' + error.message);
+      throw new InternalServerException('Failed to update role: ' + error.message);
     }
   }
 
@@ -116,7 +114,7 @@ export class RoleService {
       }
 
       if (role.users && role.users.length > 0) {
-        throw new BadRequestException(
+        throw new ConflictException(
           `Cannot delete role. It has ${role.users.length} user(s) assigned`,
         );
       }
@@ -127,10 +125,10 @@ export class RoleService {
 
       return plainToInstance(RoleEntity, role, { excludeExtraneousValues: false });
     } catch (error: any) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (error instanceof ConflictException || error instanceof NotFoundException || error instanceof ValidationException) {
         throw error;
       }
-      throw new BadRequestException('Failed to delete role: ' + error.message);
+      throw new InternalServerException('Failed to delete role: ' + error.message);
     }
   }
 }

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/common/decorators/metadata';
-import { LoginDto, RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
 import { UserGoogle, User, DeviceId } from '@/common/decorators/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
@@ -38,8 +38,17 @@ export class AuthController {
     @Public()
     @Post('verify-register-otp')
     @ApiOperation({ summary: 'Verify OTP and complete account registration' })
-    async verifyRegisterOtp(@Body() verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<IApiResponse<any>> {
-        return await this.authService.verifyRegisterOtp(verifyRegisterOtpDto);
+    async verifyRegisterOtp(@Body() verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<IApiResponse<UserEntity>> {
+        const user = await this.authService.verifyRegisterOtp(verifyRegisterOtpDto);
+        return { statusCode: 200, message: 'Account verified and created successfully', data: user };
+    }
+
+    @Public()
+    @Post('resend-register-otp')
+    @ApiOperation({ summary: 'Resend OTP to registered email during registration process' })
+    async resendRegisterOtp(@Body() resendRegisterOtpDto: ResendRegisterOtpDto): Promise<IApiResponse<any>> {
+        const data = await this.authService.resendRegisterOtp(resendRegisterOtpDto);
+        return { statusCode: 200, message: 'OTP has been resent successfully to your email', data };
     }
 
 

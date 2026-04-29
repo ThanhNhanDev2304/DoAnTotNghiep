@@ -4,7 +4,7 @@ import { UsersService } from '@/users/users.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import {  RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
+import {  RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
@@ -28,6 +28,7 @@ export class AuthService {
     private readonly otpExpire: string;
     private readonly otpLength: number;
     private readonly otpMaxAttempts: number;
+    private readonly otpResendCooldown: string;
 
 
     constructor(
@@ -47,6 +48,7 @@ export class AuthService {
         this.otpExpire = this.configService.get<string>('OTP_EXPIRE')!;
         this.otpLength = Number(this.configService.get<string>('OTP_LENGTH'));
         this.otpMaxAttempts = Number(this.configService.get<string>('OTP_MAX_ATTEMPTS'));
+        this.otpResendCooldown = this.configService.get<string>('OTP_RESEND_COOLDOWN')!;
         if (!this.refreshTokenName || this.refreshTokenName.trim() === '') {
             throw new Error('Refresh token cookie name is not defined in environment variables');
         }
@@ -64,6 +66,9 @@ export class AuthService {
         }
         if (!this.otpMaxAttempts || !Number.isInteger(this.otpMaxAttempts) || this.otpMaxAttempts <= 0) {
             throw new Error('OTP_MAX_ATTEMPTS is not defined or must be a positive integer in environment variables');
+        }
+        if (!this.otpResendCooldown || this.otpResendCooldown.trim() === '') {
+            throw new Error('OTP_RESEND_COOLDOWN is not defined in environment variables');
         }
 
         this.defaultRoleName = this.configService.get<string>('NAME_ROLE_USER') || 'USER';
@@ -147,7 +152,7 @@ export class AuthService {
     }
 
 
-    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<IApiResponse<UserEntity>> {
+    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<UserEntity> {
         try {
             const { email, otp } = verifyRegisterOtpDto;
             if (otp.length !== this.otpLength) {
@@ -229,13 +234,9 @@ export class AuthService {
                 return newUser;
             });
 
-            return {
-                statusCode: 201,
-                message: 'Account verified and created successfully',
-                data: plainToInstance(UserEntity, createdUser, {
+            return plainToInstance(UserEntity, createdUser, {
                     excludeExtraneousValues: false,
-                }),
-            };
+                })
         } catch (error: any) {
             if (error instanceof ConflictException || error instanceof NotFoundException) {
                 throw error;
@@ -244,6 +245,62 @@ export class AuthService {
         }
     }
 
+    async resendRegisterOtp(resendRegisterOtpDto: ResendRegisterOtpDto): Promise<string> {
+        try {
+            const { email } = resendRegisterOtpDto;
+            const now = new Date();
+
+            const pendingRegistration = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+            if (!pendingRegistration) {
+                throw new ConflictException('No pending registration found for this email. Please register first.');
+            }
+
+            if (pendingRegistration.otpExpiresAt <= now) {
+                throw new ConflictException('OTP has expired. Please register again to get a new OTP.');
+            }
+
+            // Check resend cooldown
+            if (pendingRegistration.resendAfter && pendingRegistration.resendAfter > now) {
+                const remainingMs = pendingRegistration.resendAfter.getTime() - now.getTime();
+                const remainingSeconds = Math.ceil(remainingMs / 1000);
+                throw new ConflictException(
+                    `You can only resend OTP after ${remainingSeconds} second(s). Please wait before requesting a new OTP.`,
+                );
+            }
+
+            // Reset attempt count on resend
+            const otp = generateNumericOtp(this.otpLength);
+            const otpHash = await generatePasswordHash(otp, this.saltRounds);
+            const otpExpiresAt = new Date(Date.now() + ms(this.otpExpire as ms.StringValue));
+            const resendAfter = new Date(Date.now() + ms(this.otpResendCooldown as ms.StringValue));
+
+            const updatedPendingRegistration = await this.prismaService.pendingRegistration.update({
+                where: { email },
+                data: {
+                    otpHash,
+                    otpExpiresAt,
+                    resendAfter,
+                    attemptCount: 0, // Reset attempts on resend
+                },
+            });
+
+            // Send new OTP email
+            try {
+                await this.emailService.sendRegisterOtp(email, updatedPendingRegistration.userName, otp, this.otpExpire);
+            } catch (error) {
+                throw new ConflictException('Failed to send OTP email. Please try again.');
+            }
+
+            console.log(`Resent OTP for ${email}: ${otp} (expires at ${otpExpiresAt.toISOString()})`); // Log OTP for testing purposes. Remove in production.
+
+            return this.otpExpire;
+        } catch (error: any) {
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+            throw new InternalServerException(`Failed to resend OTP: ${error.message}`);
+        }
+    }
 
     private async generateRefreshToken(payload: { userId: string; _sub: string, deviceId: string }): Promise<string> {
         const expiresIn = this.expiresInRefresh;

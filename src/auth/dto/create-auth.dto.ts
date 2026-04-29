@@ -41,6 +41,13 @@ export class VerifyRegisterOtpDto {
   otp!: string;
 }
 
+export class ResendRegisterOtpDto {
+  @ApiProperty({ example: 'example@gmail.com', description: 'Email used during registration' })
+  @IsNotEmpty({ message: 'Email must not be empty' })
+  @IsEmail({}, { message: 'Email must be a valid email address' })
+  email!: string;
+}
+
 export class LoginDto {
     @ApiProperty({ example: 'example', description: 'The username or email of the user' })
     @IsNotEmpty({ message: 'Username or email must not be empty' })

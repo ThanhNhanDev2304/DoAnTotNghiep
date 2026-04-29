@@ -16,13 +16,18 @@ import { ConflictException, InternalServerException, NotFoundException } from '@
 @Controller('auth')
 export class AuthController {
     private readonly refreshTokenName: string;
+    private readonly urlClient: string;
     constructor(
         private readonly authService: AuthService,
         private readonly configService: ConfigService
     ) {
         this.refreshTokenName = this.configService.get<string>('NAME_COOKIE_REFRESH_TOKEN_BROWSER')!;
+        this.urlClient = this.configService.get<string>('URL_CLIENT')!;
         if (!this.refreshTokenName || this.refreshTokenName.trim() === '') {
             throw new Error('Refresh token cookie name is not defined in environment variables');
+        }
+        if (!this.urlClient || this.urlClient.trim() === '') {
+            throw new Error('URL_CLIENT is not defined in environment variables');
         }
 
     }
@@ -142,17 +147,24 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     @Get('google/callback')
     @ApiOperation({ summary: 'Google Auth Callback' })
-    async googleAuthRedirect(@UserGoogle() googleUser: GoogleUser, @DeviceId() deviceId: string, @Res({ passthrough: true }) res: Response): Promise<IApiResponse<any>> {
+    async googleAuthRedirect(@UserGoogle() googleUser: GoogleUser, @DeviceId() deviceId: string, @Res({ passthrough: true }) res: Response): Promise<void | IApiResponse<any>> {
         const result = await this.authService.googleLogin(googleUser, res, deviceId);
         // Sau khi đăng nhập thành công, bạn thường sẽ muốn redirect người dùng về giao diện Frontend
         // Ví dụ: return res.redirect('http://localhost:3000/dashboard');
-        return {
-            statusCode: 200,
-            message: 'Google Login successful',
-            data: {
-                accessToken: result.accessToken,
-                user: result.user,
-            },
-        };
+        const data = {
+            accessToken: result.accessToken,
+            user: result.user,
+        }
+        const encodedData = Buffer.from(JSON.stringify(data)).toString('base64');
+        res.redirect(`${this.urlClient}/google/callback?data=${encodeURIComponent(encodedData)}`);
+
+        // return {
+        //     statusCode: 200,
+        //     message: 'Google Login successful',
+        //     data: {
+        //         accessToken: result.accessToken,
+        //         user: result.user,
+        //     },
+        // };
     }
 }

@@ -44,6 +44,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = Array.isArray(res.message)
           ? res.message.join(', ')
           : res.message || message;
+
+        // Preserve validation errors detail from ValidationPipe
+        if (res.errors && Array.isArray(res.errors)) {
+          details = res.errors;
+        }
       } else {
         message = String(exceptionResponse);
       }
@@ -79,9 +84,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       code,
       timestamp: new Date().toISOString(),
       path: request.url,
-      ...(process.env.NODE_ENV === 'development' && {
-        details,
-      }),
+      ...(details && { details }),
     });
   }
 }

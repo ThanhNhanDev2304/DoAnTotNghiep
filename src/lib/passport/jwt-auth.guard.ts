@@ -46,7 +46,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
                 throw new Error('Admin role name is not defined in environment variables');
             }
             if (user.roleName !== adminRoleName) {
-                throw new ForbiddenException('Bạn không đủ quyền');
+                throw new ForbiddenException('Access denied: Admins only');
             }
         }
 

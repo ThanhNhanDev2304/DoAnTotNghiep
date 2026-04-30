@@ -9,6 +9,7 @@ import { ValidationException } from '@/common/exceptions/app.exception';
 import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 import { AdminOnly } from '@/common/decorators/metadata';
 
+@AdminOnly() // Mark the entire controller as admin-only, meaning all routes in this controller require admin privileges to access.
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
@@ -42,7 +43,6 @@ export class UsersController {
   }
 
   @Patch('role/:id')
-  @AdminOnly()
   @ApiOperation({ summary: 'Update a user\'s role' })
   async updateRole(@Param('id') id: string, @Body() role: UpdateUserRoleDto): Promise<IApiResponse<UserEntity>> {
     const result = await this.usersService.updateRole(id, role.roleNameOrId);
@@ -90,7 +90,6 @@ export class UsersController {
 
 
   @Delete(':id')
-  @AdminOnly()
   @ApiOperation({ summary: 'Delete a user' })
   // @ApiResponse({ status: 200, description: 'User deleted successfully', type: UserEntity })
   async remove(@Param('id') id: string): Promise<IApiResponse<UserEntity>> {

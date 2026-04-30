@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UsersService } from '@/users/users.service';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserAvatarOrBGDto, UpdateUserDto, UserImageType } from '@/users/dto/update-user.dto';
+import { UpdateUserAvatarOrBGDto, UpdateUserDto, UpdateUserRoleDto, UserImageType } from '@/users/dto/update-user.dto';
 import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { UserEntity } from '@/users/entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -10,13 +10,13 @@ import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
   async create(@Body() createUserDto: CreateUserDto): Promise<IApiResponse<UserEntity>> {
     const data = await this.usersService.create(createUserDto);
-    return { statusCode: 200, message: 'User created successfully',  data };
+    return { statusCode: 200, message: 'User created successfully', data };
   }
 
   @Get()
@@ -40,26 +40,32 @@ export class UsersController {
     return { statusCode: 200, message: 'User updated successfully', data: result };
   }
 
+  @Patch('role/:id')
+  @ApiOperation({ summary: 'Update a user\'s role' })
+  async updateRole(@Param('id') id: string, @Body() role: UpdateUserRoleDto): Promise<IApiResponse<UserEntity>> {
+    const result = await this.usersService.updateRole(id, role.roleNameOrId);
+    return { statusCode: 200, message: 'User role updated successfully', data: result };
+  }
 
   @Patch('avatarorbg/:id')
   @ApiOperation({ summary: 'Update a user\'s avatar or background' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      imgProfile: {
-        type: 'string',
-        format: 'binary',
+    schema: {
+      type: 'object',
+      properties: {
+        imgProfile: {
+          type: 'string',
+          format: 'binary',
+        },
+        typeImg: {
+          type: 'string',
+          enum: ['avatar', 'background'],
+        },
       },
-      typeImg: {
-        type: 'string',
-        enum: ['avatar', 'background'],
-      },
+      required: ['imgProfile', 'typeImg'],
     },
-    required: ['imgProfile', 'typeImg'],
-  },
-})
+  })
   @UseInterceptors(FileInterceptor('imgProfile')) // Tên trường file trong form-data phải trùng với tên này
   async updateAvatar(@Param('id') id: string, @UploadedFile() imgProfile: Express.Multer.File, @Body() updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto): Promise<IApiResponse<UserEntity>> {
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];

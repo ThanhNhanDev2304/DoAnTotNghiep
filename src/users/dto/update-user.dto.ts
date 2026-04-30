@@ -10,6 +10,13 @@ export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['passwor
     description?: string;
 }
 
+export class UpdateUserRoleDto {
+    @ApiProperty({ description: 'The new role name or ID of the user', example: 'ADMIN' })
+    @IsString({ message: 'Role name or ID must be a string' })
+    @MaxLength(100, { message: 'Role name or ID must be at most 100 characters' })
+    roleNameOrId!: string;
+}
+
 export enum UserImageType {
     AVATAR = 'avatar',
     BACKGROUND = 'background',

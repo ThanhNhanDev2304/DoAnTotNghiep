@@ -127,7 +127,7 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
-      const checkResult = await this.checkEmailOrUsernameExists( updateUserDto.email || user.email, updateUserDto.userName || user.userName, id );
+      const checkResult = await this.checkEmailOrUsernameExists(updateUserDto.email || user.email, updateUserDto.userName || user.userName, id);
 
       // Fix: Check exists property, not the object itself
       if (checkResult.exists) {
@@ -145,6 +145,30 @@ export class UsersService {
       throw new InternalServerException(error.message);
     }
   }
+
+  async updateRole(id: string, roleNameOrId: string): Promise<UserEntity> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      const roleId: (string | null) = await this.roleService.findRoleIdByName(roleNameOrId);
+      if (!roleId || roleId === null) {
+        throw new NotFoundException('Role not found');
+      }
+      
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: { roleId },
+      });
+      return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
+    } catch (error: any) {
+      throw new InternalServerException(error.message);
+    }
+  }
+
 
   async remove(id: string): Promise<UserEntity> {
     try {

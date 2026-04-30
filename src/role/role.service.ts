@@ -11,14 +11,22 @@ import { InternalServerException, NotFoundException, ConflictException, Validati
 export class RoleService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async findRoleIdByName(roleName: string): Promise<string | null> { // default this func are public 
+  async findRoleIdByName(roleNameOrId: string): Promise<string | null> {
     try {
-      const role = await this.prisma.role.findUnique({
-        where: { roleName },
+      // Thử tìm bằng roleName trước
+      let role = await this.prisma.role.findUnique({
+        where: { roleName: roleNameOrId },
       });
+
+      // Nếu không tìm thấy, thử tìm bằng roleId (UUID)
+      if (!role) {
+        role = await this.prisma.role.findUnique({
+          where: { id: roleNameOrId },
+        });
+      }
+
       return role ? role.id : null;
-    }
-    catch (error: any) {
+    } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
         throw new NotFoundException('Role not found');
       }

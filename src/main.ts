@@ -42,7 +42,7 @@ async function bootstrap() {
   validationConfig(app);
 
   // You can add global guards here if needed when you call request handler, it will check if the route is public or not, if not it will check the token and validate it before calling the handler
-  app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.useGlobalGuards(new JwtAuthGuard(reflector, configService));
 
   // Add cookie-parser middleware to handle cookies in requests and responses, which is essential for managing refresh tokens stored in cookies.
   app.use(cookieParser());

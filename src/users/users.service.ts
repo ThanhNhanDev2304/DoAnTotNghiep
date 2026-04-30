@@ -80,8 +80,10 @@ export class UsersService {
           roleId,
           password: await ensurePasswordHash(createUserDto.password, saltRounds)
         },
+        include: { role: { select: { roleName: true } } }
       });
-      return newUser ? plainToInstance(UserEntity, newUser, { excludeExtraneousValues: false }) : new UserEntity();
+      const { role, ...userData } = newUser; // destructure to separate role from user data
+      return newUser ? plainToInstance(UserEntity, {...userData, roleName: newUser.role?.roleName, }, { excludeExtraneousValues: false }) : new UserEntity();
     } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException(`Error creating user: ${error.message}`);
@@ -95,8 +97,11 @@ export class UsersService {
 
   async findAll(): Promise<UserEntity[]> {
     try {
-      const listUsers = await this.prisma.user.findMany();
-      return listUsers ? listUsers.map(user => plainToInstance(UserEntity, user, { excludeExtraneousValues: false })) : [];
+      const listUsers = await this.prisma.user.findMany({include: { role: {select: { roleName: true }} } });
+      return listUsers ? listUsers.map(user => {
+        const { role, ...userData } = user; // destructure to separate role from user data
+        return plainToInstance(UserEntity, {...userData, roleName: user.role?.roleName, }, { excludeExtraneousValues: false });
+      }) : [];
     } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
         throw new NotFoundException('Database error: ' + error.message);
@@ -109,11 +114,13 @@ export class UsersService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
+        include: { role: { select: { roleName: true } } }
       });
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
-      return plainToInstance(UserEntity, user, { excludeExtraneousValues: false });
+      const { role, ...userData } = user; // destructure to separate role from user data
+      return plainToInstance(UserEntity, {...userData, roleName: user.role?.roleName, }, { excludeExtraneousValues: false });
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
@@ -139,8 +146,10 @@ export class UsersService {
       const updatedUser = await this.prisma.user.update({
         where: { id },
         data: updateUserDto,
+        include: { role: { select: { roleName: true } } }
       });
-      return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
+      const { role, ...userData } = updatedUser; // destructure to separate role from user data
+      return plainToInstance(UserEntity, {...userData, roleName: updatedUser.role?.roleName, }, { excludeExtraneousValues: false });
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
@@ -162,8 +171,10 @@ export class UsersService {
       const updatedUser = await this.prisma.user.update({
         where: { id },
         data: { roleId },
+        include: { role: { select: { roleName: true } } }
       });
-      return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
+      const { role, ...userData } = updatedUser; // destructure to separate role from user data
+      return plainToInstance(UserEntity, {...userData, roleName: updatedUser.role?.roleName, }, { excludeExtraneousValues: false });
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
@@ -174,14 +185,16 @@ export class UsersService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
+        include: { role: { select: { roleName: true } } }
       });
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
       await this.prisma.user.delete({
-        where: { id },
+        where: { id }
       });
-      return plainToInstance(UserEntity, user, { excludeExtraneousValues: false });
+      const { role, ...userData } = user; // destructure to separate role from user data
+      return plainToInstance(UserEntity, {...userData, roleName: user.role?.roleName, }, { excludeExtraneousValues: false });
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
@@ -204,8 +217,10 @@ export class UsersService {
         data: {
           ...(updateUserAvatarOrBGDto.typeImg === UserImageType.AVATAR ? { avatarUrl: uploadedFile.fileUrl } : { backgroundUrl: uploadedFile.fileUrl }),
         },
+        include: { role: { select: { roleName: true } } }
       });
-      return plainToInstance(UserEntity, updatedUser, { excludeExtraneousValues: false });
+      const { role, ...userData } = updatedUser; // destructure to separate role from user data
+      return plainToInstance(UserEntity, {...userData, roleName: updatedUser.role?.roleName, }, { excludeExtraneousValues: false });
 
     } catch (error: any) {
       console.error('Error updating user avatar:', error);

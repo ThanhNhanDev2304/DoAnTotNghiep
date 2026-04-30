@@ -5,7 +5,9 @@ import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
 import { RoleEntity } from '@/role/entities/role.entity';
 import { IApiResponse } from '@/common/interceptors/transform.interceptor';
+import { AdminOnly } from '@/common/decorators/metadata';
 
+@AdminOnly()
 @Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}

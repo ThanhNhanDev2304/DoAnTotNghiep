@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/common/decorators/metadata';
-import { LoginDto, RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto, ChangePasswordVerifyDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
 import { UserGoogle, User, DeviceId } from '@/common/decorators/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
@@ -108,14 +108,26 @@ export class AuthController {
     }
 
     @Public()
-    @Post('change-password-otp')
+    @Post('change-password/send-otp')
     @ApiOperation({ summary: 'Change password for the currently authenticated user' }) // Add Swagger documentation for this endpoint
-    async changePasswordWithOtp(@Body() verifyEmailDto: VerifyEmailDto) {
-        const result = await this.authService.changePasswordWithOtp(verifyEmailDto);
+    async changePasswordWithOtp(@Body() verifyEmailDto: VerifyEmailDto): Promise<IApiResponse<any>> {
+        const result = await this.authService.sendChangePasswordOtp(verifyEmailDto);
         return {
             statusCode: 200,
-            message: 'OTP for password change has been sent to your email if it exists in our system',
+            message: 'If your email exists in our system, you will receive an OTP to reset your password. Please check your email.',
             data: result,
+        };
+    }
+    
+    @Public()
+    @Post('change-password/verify-otp')
+    @ApiOperation({ summary: 'Verify OTP and change password for the currently authenticated user' }) // Add Swagger documentation for this endpoint
+    async verifyChangePasswordOtp(@Body() changePasswordVerifyDto: ChangePasswordVerifyDto): Promise<IApiResponse<UserEntity>> {
+        const user = await this.authService.verifyChangePasswordOtp(changePasswordVerifyDto);
+        return {
+            statusCode: 200,
+            message: 'Password changed successfully',
+            data: user,
         };
     }
 

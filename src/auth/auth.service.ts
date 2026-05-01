@@ -4,7 +4,7 @@ import { UsersService } from '@/users/users.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto } from '@/auth/dto/create-auth.dto';
+import { RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto, ChangePasswordVerifyDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
@@ -81,10 +81,16 @@ export class AuthService {
         return { otp, otpHash, otpExpiresAt, resendAfter };
     }
 
-    async registerWithOTP(registerDto: RegisterDto): Promise<string> {
+    async registerWithOTP(registerDto: RegisterDto): Promise<{ otpExpire: string }> {
         try {
             const now = new Date();
             const { userName, email, password } = registerDto;
+
+            // Basic runtime email validation (DTO should normally handle this)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                throw new ValidationException('Invalid email address');
+            }
 
             const existedUser = await this.usersService.checkEmailOrUsernameExists(email, userName);
             if (existedUser.exists) {
@@ -109,8 +115,22 @@ export class AuthService {
 
             const activePendingByEmail = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
             const activePendingByUsername = await this.prismaService.pendingRegistration.findUnique({ where: { userName } });
-            if (activePendingByEmail || activePendingByUsername) {
-                throw new ConflictException(`A pending registration with this ${activePendingByEmail ? 'email' : 'username'} already exists. Please verify OTP or wait until it expires.`);
+            
+            // Check email-specific cooldown
+            if (activePendingByEmail) {
+                if (activePendingByEmail.resendAfter && activePendingByEmail.resendAfter > now) {
+                    const remainingMs = activePendingByEmail.resendAfter.getTime() - now.getTime();
+                    const remainingSeconds = Math.ceil(remainingMs / 1000);
+                    throw new ConflictException(`A pending registration exists for this email. You can request a new OTP after ${remainingSeconds} second(s).`);
+                }
+                // Email pending is inactive (cooldown expired), can re-register with same email
+            }
+
+            // If different user is trying to register with same username, delete the old pending
+            if (activePendingByUsername && activePendingByUsername.email !== email) {
+                await this.prismaService.pendingRegistration.delete({
+                    where: { email: activePendingByUsername.email },
+                });
             }
 
             const passwordHash = await generatePasswordHash(password, this.saltRounds);
@@ -144,8 +164,8 @@ export class AuthService {
                 );
             }
 
-            console.log(`Generated OTP for ${email}: ${otp} (expires at ${otpExpiresAt.toISOString()})`); // Log OTP for testing purposes. Remove in production.
-            return otp;
+            // Do not log OTPs in production. Return structured info instead of raw OTP.
+            return { otpExpire: this.otpExpire };
         } catch (error: any) {
             if (error instanceof ConflictException) {
                 throw error;
@@ -247,7 +267,7 @@ export class AuthService {
         }
     }
 
-    async resendRegisterOtp(resendRegisterOtpDto: ResendRegisterOtpDto): Promise<string> {
+    async resendRegisterOtp(resendRegisterOtpDto: ResendRegisterOtpDto): Promise<{ otpExpire: string }> {
         try {
             const { email } = resendRegisterOtpDto;
             const now = new Date();
@@ -258,6 +278,8 @@ export class AuthService {
             }
 
             if (pendingRegistration.otpExpiresAt <= now) {
+                // expired - remove stale pending registration so user can start over
+                await this.prismaService.pendingRegistration.delete({ where: { email: pendingRegistration.email } });
                 throw new ConflictException('OTP has expired. Please register again to get a new OTP.');
             }
 
@@ -290,9 +312,8 @@ export class AuthService {
                 throw new ConflictException('Failed to send OTP email. Please try again.');
             }
 
-            console.log(`Resent OTP for ${email}: ${otp} (expires at ${otpExpiresAt.toISOString()})`); // Log OTP for testing purposes. Remove in production.
-
-            return this.otpExpire;
+            // Do not log OTP in production. Return structured info.
+            return { otpExpire: this.otpExpire };
         } catch (error: any) {
             if (error instanceof ConflictException) {
                 throw error;
@@ -301,8 +322,156 @@ export class AuthService {
         }
     }
 
-    async changePasswordWithOtp(verifyEmailDto: VerifyEmailDto) {
+    async sendChangePasswordOtp(verifyEmailDto: VerifyEmailDto): Promise<{ otpExpire: string }> {
+        try {
+            const { email } = verifyEmailDto;
+            const now = new Date();
 
+            // 1. Kiểm tra cooldown
+            const existingPending = await this.prismaService.pendingRegistration.findUnique({
+                where: { email }
+            });
+
+            if (existingPending && existingPending.resendAfter && existingPending.resendAfter > now) {
+                const remainingMs = existingPending.resendAfter.getTime() - now.getTime();
+                const remainingSeconds = Math.ceil(remainingMs / 1000);
+                throw new ConflictException(`Please wait ${remainingSeconds} seconds before requesting a new OTP.`);
+            }
+
+            // 2. Kiểm tra user tồn tại (không throw lỗi để bảo mật)
+            const user = await this.prismaService.user.findUnique({ where: { email } });
+            if (!user) {
+                // Trả về success ngay cả khi email không tồn tại (security best practice)
+                return { otpExpire: this.otpExpire };
+            }
+
+            // 3. Tạo OTP mới
+            const { otp, otpHash, otpExpiresAt, resendAfter } = await this.generateOtpHashAndExpiration();
+
+            // 4. Lưu vào pending registration
+            await this.prismaService.pendingRegistration.upsert({
+                where: { email },
+                update: {
+                    userName: user.userName,
+                    otpHash,
+                    otpExpiresAt,
+                    attemptCount: 0,
+                    resendAfter,
+                },
+                create: {
+                    email,
+                    userName: user.userName,
+                    passwordHash: '', // Không dùng cho change password
+                    otpHash,
+                    otpExpiresAt,
+                    attemptCount: 0,
+                    resendAfter,
+                },
+            });
+
+            // 5. Gửi email
+            try {
+                await this.emailService.sendRegisterOtp(email, user.userName, otp, this.otpExpire);
+            } catch (error) {
+                // Rollback: xóa pending registration nếu gửi email thất bại
+                await this.prismaService.pendingRegistration.deleteMany({
+                    where: { email }
+                });
+                throw new ConflictException('Failed to send OTP email. Please try again.');
+            }
+
+            return { otpExpire: this.otpExpire };
+
+        } catch (error: any) {
+            if (error instanceof ConflictException || error instanceof ValidationException) {
+                throw error;
+            }
+            throw new InternalServerException(`Failed to send change password OTP: ${error.message}`);
+        }
+    }
+
+    async verifyChangePasswordOtp(changePasswordVerifyDto: ChangePasswordVerifyDto): Promise<UserEntity> {
+        try {
+            const { email, otp, newPassword } = changePasswordVerifyDto;
+
+            // 1. Validate OTP length
+            if (otp.length !== this.otpLength) {
+                throw new ConflictException(`OTP must be exactly ${this.otpLength} digits`);
+            }
+            // 2. Tìm pending registration
+            const pendingRegistration = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+            if (!pendingRegistration) {
+                throw new ConflictException('No OTP request found for this email. Please request a new OTP.');
+            }
+            // 3. Kiểm tra OTP expired
+            if (pendingRegistration.otpExpiresAt <= new Date()) {
+                // Xóa pending registration nếu đã hết hạn
+                await this.prismaService.pendingRegistration.delete({
+                    where: { email }
+                });
+                throw new ConflictException('OTP has expired. Please request a new OTP.');
+            }
+            // 4. Kiểm tra số lần thử sai
+            if (pendingRegistration.attemptCount >= this.otpMaxAttempts) {
+                // Xóa pending registration nếu vượt quá số lần thử
+                await this.prismaService.pendingRegistration.delete({
+                    where: { email }
+                });
+                throw new ConflictException(
+                    `Too many incorrect attempts. Please request a new OTP after ${this.otpExpire}.`
+                );
+            }
+            // 5. Verify OTP
+            const isOtpValid = await comparePassword(otp, pendingRegistration.otpHash);
+            if (!isOtpValid) {
+                // Tăng attempt count
+                const updatedPending = await this.prismaService.pendingRegistration.update({
+                    where: { email },
+                    data: { attemptCount: { increment: 1 } }
+                });
+                const remainingAttempts = this.otpMaxAttempts - updatedPending.attemptCount;
+                if (remainingAttempts <= 0) {
+                    throw new ConflictException('OTP has been locked due to too many incorrect attempts.');
+                }
+                throw new ConflictException(
+                    `Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`
+                );
+            }
+            // 6. Validate new password (optional - thêm validation nếu cần)
+            if (!newPassword || newPassword.length < 6) {
+                throw new ValidationException('New password must be at least 6 characters long');
+            }
+            // 7. Hash new password
+            const newPasswordHash = await generatePasswordHash(newPassword, this.saltRounds);
+            // 8. Update password trong database
+            const updatedUser = await this.prismaService.$transaction(async (tx) => {
+                // Update user password
+                const user = await tx.user.update({
+                    where: { email },
+                    data: { password: newPasswordHash },
+                    include: { role: true }
+                });
+                // Xóa pending registration sau khi thành công
+                await tx.pendingRegistration.delete({
+                    where: { email }
+                });
+                return user;
+            });
+            // destructure to separate role from user data
+            const { role, ...userData } = updatedUser;
+            // 9. Chuyển đổi sang UserEntity
+            return plainToInstance(UserEntity, {
+                ...userData,
+                roleName: updatedUser.role?.roleName ?? null
+            }, { excludeExtraneousValues: false });
+        } catch (error: any) {
+            if (error instanceof ConflictException ||
+                error instanceof NotFoundException ||
+                error instanceof ValidationException) {
+                throw error;
+            }
+            throw new InternalServerException(`Failed to verify change password OTP: ${error.message}`);
+        }
     }
 
     private async generateRefreshToken(payload: { userId: string; _sub: string, deviceId: string }): Promise<string> {

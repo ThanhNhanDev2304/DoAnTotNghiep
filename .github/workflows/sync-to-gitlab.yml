@@ -18,4 +18,4 @@ jobs:
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          git push "https://oauth2:${GITLAB_TOKEN}@gitlab.com/LienThuan04/project-graduation.git"
+          git push "https://oauth2:${GITLAB_TOKEN}@gitlab.com/LienThuan04/project-graduation.git" --all

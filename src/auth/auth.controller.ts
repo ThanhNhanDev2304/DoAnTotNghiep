@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/common/decorators/metadata';
-import { LoginDto, RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto } from '@/auth/dto/create-auth.dto';
+import { LoginDto, RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto } from '@/auth/dto/create-auth.dto';
 import type { Request, Response } from 'express';
 import { UserGoogle, User, DeviceId } from '@/common/decorators/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
@@ -56,7 +56,6 @@ export class AuthController {
         return { statusCode: 200, message: 'OTP has been resent successfully to your email', data };
     }
 
-
     @Public()
     @UseGuards(LocalAuthGuard) // Apply the local authentication guard to this route
     @ApiOperation({ summary: 'Login a user for a session and cookie management' }) // Add Swagger documentation for this endpoint
@@ -72,7 +71,6 @@ export class AuthController {
             },
         };
     }
-
 
     @Public()
     @ApiOperation({ summary: 'Refresh access token using a valid refresh token stored in cookies' }) // Add Swagger documentation for this endpoint
@@ -107,6 +105,18 @@ export class AuthController {
         } catch (error) {
             throw new InternalServerException(`Failed to retrieve profile, ${(error as Error).message}`);
         }
+    }
+
+    @Public()
+    @Post('change-password-otp')
+    @ApiOperation({ summary: 'Change password for the currently authenticated user' }) // Add Swagger documentation for this endpoint
+    async changePasswordWithOtp(@Body() verifyEmailDto: VerifyEmailDto) {
+        const result = await this.authService.changePasswordWithOtp(verifyEmailDto);
+        return {
+            statusCode: 200,
+            message: 'OTP for password change has been sent to your email if it exists in our system',
+            data: result,
+        };
     }
 
     @Post('logout')
@@ -157,7 +167,6 @@ export class AuthController {
         }
         const encodedData = Buffer.from(JSON.stringify(data)).toString('base64');
         res.redirect(`${this.urlClient}/google/callback?data=${encodeURIComponent(encodedData)}`);
-
         // return {
         //     statusCode: 200,
         //     message: 'Google Login successful',

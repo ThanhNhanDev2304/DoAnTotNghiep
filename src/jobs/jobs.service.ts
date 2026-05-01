@@ -12,7 +12,7 @@ export class JobsService {
     ) { }
     private readonly logger = new Logger(JobsService.name);
 
-        @Cron(CronExpression.EVERY_MINUTE, {
+    @Cron(CronExpression.EVERY_MINUTE, {
         name: 'handleExpiredSessions',
         timeZone: 'Asia/Ho_Chi_Minh',
         waitForCompletion: true,
@@ -69,14 +69,19 @@ export class JobsService {
     @Cron(CronExpression.EVERY_MINUTE, {
         name: 'cleanupExpiredPendingRegistrations',
         waitForCompletion: true,
+        timeZone: 'Asia/Ho_Chi_Minh',
     })
     async cleanupExpiredPendingRegistrations() {
-        const result = await this.prisma.pendingRegistration.deleteMany({
-            where: {
-                otpExpiresAt: { lt: new Date() },
-            },
-        });
-        this.logger.log(`✅ Deleted ${result.count} expired pending registrations successfully`);
+        try {
+            const result = await this.prisma.pendingRegistration.deleteMany({
+                where: { otpExpiresAt: { lt: new Date() } },
+            });
+            if (result.count > 0) {
+                this.logger.log(`✅ Deleted ${result.count} expired pending registrations`);
+            }
+        } catch (error: any) {
+            this.logger.error(`Failed to cleanup pending registrations: ${error.message}`);
+        }
     }
 
 }

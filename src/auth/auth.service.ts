@@ -4,7 +4,7 @@ import { UsersService } from '@/users/users.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import {  RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto } from '@/auth/dto/create-auth.dto';
+import { RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { plainToInstance } from 'class-transformer';
@@ -15,7 +15,6 @@ import { CreateSessionDto } from '@/session/dto/create-session.dto';
 import { generateNumericOtp } from '@/common/otp/generate-otp';
 import { EmailService } from '@/email/email.service';
 import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
-import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 
 @Injectable()
 export class AuthService {
@@ -74,6 +73,14 @@ export class AuthService {
         this.defaultRoleName = this.configService.get<string>('NAME_ROLE_USER') || 'USER';
     }
 
+    private async generateOtpHashAndExpiration(): Promise<{ otp: string; otpHash: string; otpExpiresAt: Date; resendAfter: Date }> {
+        const otp = generateNumericOtp(this.otpLength);
+        const otpHash = await generatePasswordHash(otp, this.saltRounds);
+        const otpExpiresAt = new Date(Date.now() + ms(this.otpExpire as ms.StringValue));
+        const resendAfter = new Date(Date.now() + ms(this.otpResendCooldown as ms.StringValue));
+        return { otp, otpHash, otpExpiresAt, resendAfter };
+    }
+
     async registerWithOTP(registerDto: RegisterDto): Promise<string> {
         try {
             const now = new Date();
@@ -107,23 +114,19 @@ export class AuthService {
             }
 
             const passwordHash = await generatePasswordHash(password, this.saltRounds);
-            const otp = generateNumericOtp(this.otpLength);
-            const otpHash = await generatePasswordHash(otp, this.saltRounds);
-            const otpExpiresAt = new Date(
-                Date.now() + ms(this.otpExpire as ms.StringValue),
-            );
+            const { otp, otpHash, otpExpiresAt, resendAfter } = await this.generateOtpHashAndExpiration();
 
             const pendingRegistration = await this.prismaService.pendingRegistration.upsert({
                 where: { email },
                 update: {
                     userName, passwordHash, otpHash, otpExpiresAt,
                     attemptCount: 0, // Reset attempt count and resendAfter on new registration or when re-registering after expiration
-                    resendAfter: null,
+                    resendAfter: resendAfter,
                 },
                 create: {
                     email, userName, passwordHash, otpHash, otpExpiresAt,
                     attemptCount: 0,
-                    resendAfter: null,
+                    resendAfter: resendAfter,
                 },
             });
 
@@ -150,7 +153,6 @@ export class AuthService {
             throw new InternalServerException(`Failed to register user: ${error.message}`);
         }
     }
-
 
     async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<UserEntity> {
         try {
@@ -192,7 +194,7 @@ export class AuthService {
                 if (remainingAttempts <= 0) {
                     throw new ConflictException('OTP has been locked because too many incorrect attempts were made.');
                 }
-                throw new ConflictException(`Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.` );
+                throw new ConflictException(`Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`);
             }
 
             const existedUser = await this.prismaService.user.findFirst({
@@ -205,7 +207,7 @@ export class AuthService {
             });
 
             if (existedUser) {
-                throw new ConflictException('User already exists with this email or username' );
+                throw new ConflictException('User already exists with this email or username');
             }
 
             const defaultRole = await this.prismaService.role.findUnique({
@@ -235,13 +237,13 @@ export class AuthService {
             });
 
             return plainToInstance(UserEntity, createdUser, {
-                    excludeExtraneousValues: false,
-                })
+                excludeExtraneousValues: false,
+            })
         } catch (error: any) {
             if (error instanceof ConflictException || error instanceof NotFoundException) {
                 throw error;
             }
-            throw new InternalServerException( `Failed to verify registration OTP: ${error.message}` );
+            throw new InternalServerException(`Failed to verify registration OTP: ${error.message}`);
         }
     }
 
@@ -269,10 +271,7 @@ export class AuthService {
             }
 
             // Reset attempt count on resend
-            const otp = generateNumericOtp(this.otpLength);
-            const otpHash = await generatePasswordHash(otp, this.saltRounds);
-            const otpExpiresAt = new Date(Date.now() + ms(this.otpExpire as ms.StringValue));
-            const resendAfter = new Date(Date.now() + ms(this.otpResendCooldown as ms.StringValue));
+            const { otpHash, otpExpiresAt, resendAfter, otp } = await this.generateOtpHashAndExpiration();
 
             const updatedPendingRegistration = await this.prismaService.pendingRegistration.update({
                 where: { email },
@@ -300,6 +299,10 @@ export class AuthService {
             }
             throw new InternalServerException(`Failed to resend OTP: ${error.message}`);
         }
+    }
+
+    async changePasswordWithOtp(verifyEmailDto: VerifyEmailDto) {
+
     }
 
     private async generateRefreshToken(payload: { userId: string; _sub: string, deviceId: string }): Promise<string> {
@@ -330,23 +333,6 @@ export class AuthService {
         const getRoleUser = user.roleId ? await this.prismaService.role.findUnique({ where: { id: user.roleId.toString() } }) : null;
         return plainToInstance(UserEntity, { ...user, roleName: getRoleUser ? getRoleUser.roleName : null }, { excludeExtraneousValues: false });
     }
-
-    // async register(registerDto: RegisterDto) {
-    //     try {
-    //         const { userName, email, password } = registerDto;
-    //         const CreateUserDto: CreateUserDto = {
-    //             email,
-    //             userName,
-    //             password,
-    //             roleName: this.defaultRoleName
-    //         };
-    //         const result = await this.usersService.create(CreateUserDto);
-    //         return result;
-    //     } catch (error: any) {
-    //         console.error('Error registering user:', error);
-    //         throw new BadRequestException('Failed to register user', error.message);
-    //     }
-    // }
 
     async login(user: UserEntity, res: Response, deviceId: string): Promise<{ accessToken: string; user: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> }> {
         try {

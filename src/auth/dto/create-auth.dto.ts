@@ -66,3 +66,11 @@ export class LoginDto {
 
 }
 
+export class VerifyEmailDto {
+    @ApiProperty({ example: 'example@gmail.com', description: 'The email to verify' })
+    @IsNotEmpty({ message: 'Email must not be empty' })
+    @IsEmail({}, { message: 'Email must be a valid email address' })
+    @MaxLength(100, { message: 'Email must be at most 100 characters long' })
+    @MinLength(5, { message: 'Email must be at least 5 characters long' })
+    email!: string;
+}

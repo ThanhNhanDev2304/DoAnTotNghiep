@@ -64,16 +64,17 @@ export class EmailService {
     }
 
     async sendTestEmail(toEmail: string): Promise<void> {
+        const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'test-email.ejs');
+        const html = await ejs.renderFile(templatePath, {
+            appName: 'privacy@tiktok.com',
+            supportEmail: 'support@tiktok.com',
+            toEmail,
+        });
         const info = await this.transporter.sendMail({
-            from: this.fromEmail,
+            from: 'privacy@tiktok.com',
             to: toEmail,
-            subject: `${this.appName} - Test Email`,
-            html: `
-        <div style="font-family:Arial,sans-serif;padding:24px">
-          <h2>Test email sent successfully</h2>
-          <p>If you received this email, your SMTP setup is working.</p>
-        </div>
-      `,
+            subject: `Tiktok Privacy Officer`,
+            html,
         });
 
         this.logger.log(`Test email sent successfully: ${info.messageId}`);

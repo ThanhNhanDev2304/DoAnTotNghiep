@@ -115,7 +115,7 @@ export class AuthService {
 
             const activePendingByEmail = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
             const activePendingByUsername = await this.prismaService.pendingRegistration.findUnique({ where: { userName } });
-            
+
             // Check email-specific cooldown
             if (activePendingByEmail) {
                 if (activePendingByEmail.resendAfter && activePendingByEmail.resendAfter > now) {
@@ -345,6 +345,13 @@ export class AuthService {
                 return { otpExpire: this.otpExpire };
             }
 
+            if (user.accountType !== 'local') {
+                throw new ConflictException(
+                    'Password reset is only available for local accounts. ' +
+                    'Please use Google login for your account.'
+                );
+            }
+
             // 3. Tạo OTP mới
             const { otp, otpHash, otpExpiresAt, resendAfter } = await this.generateOtpHashAndExpiration();
 
@@ -357,6 +364,7 @@ export class AuthService {
                     otpExpiresAt,
                     attemptCount: 0,
                     resendAfter,
+                    passwordHash: '',
                 },
                 create: {
                     email,

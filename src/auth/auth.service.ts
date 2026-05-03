@@ -1,4 +1,3 @@
-import { PrismaService } from '@/prisma/prisma.service';
 import { SessionService } from '@/session/session.service';
 import { UsersService } from '@/users/users.service';
 import { Injectable } from '@nestjs/common';
@@ -29,7 +28,6 @@ export class AuthService {
         private readonly passwordService: PasswordService,
         private readonly registerService: RegisterService,
         // Common services
-        private readonly prismaService: PrismaService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
         private readonly usersService: UsersService,

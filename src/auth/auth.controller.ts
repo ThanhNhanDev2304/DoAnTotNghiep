@@ -29,7 +29,6 @@ export class AuthController {
         if (!this.urlClient || this.urlClient.trim() === '') {
             throw new Error('URL_CLIENT is not defined in environment variables');
         }
-
     }
 
     @Public() // Mark this route as public, allowing access without JWT authentication.

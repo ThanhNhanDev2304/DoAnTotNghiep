@@ -25,7 +25,6 @@ export class RegisterDto {
     @MaxLength(50, { message: 'Password must be at most 50 characters long' })
     @MinLength(6, { message: 'Password must be at least 6 characters long' })
     password!: string
-
 }
 
 export class VerifyRegisterOtpDto {
@@ -62,8 +61,6 @@ export class LoginDto {
     @MaxLength(50, { message: 'Password must be at most 50 characters long' })
     @MinLength(6, { message: 'Password must be at least 6 characters long' })
     password!: string
-
-
 }
 
 export class VerifyEmailDto {

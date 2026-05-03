@@ -52,9 +52,12 @@ export class UsersService {
           { email: emailOrUserName },
           { userName: emailOrUserName }
         ]
-      }
+      },
+        include: { role: { select: { roleName: true } } }
     });
-    return user ? user : null;
+    if (!user) return null;
+    const { role, ...userData } = user || {}; // destructure to separate role from user data
+    return { ...userData, roleName: user?.role?.roleName } as UserEntity;
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {

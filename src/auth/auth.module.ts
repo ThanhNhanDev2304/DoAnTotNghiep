@@ -12,6 +12,11 @@ import { LocalStrategy } from '@/auth/passport/local.strategy';
 import { JwtStrategy } from '@/auth/passport/jwt.strategy';
 import { GoogleStrategy } from '@/auth/passport/google/google.strategy';
 import { EmailModule } from '@/email/email.module';
+import { TokenService } from '@/auth/services/token.service';
+import { OtpService } from '@/auth/services/otp.service';
+import { RegisterService } from '@/auth/services/register.service';
+import { PasswordService } from '@/auth/services/password.service';
+import { GoogleService } from '@/auth/services/google.service';
 
 @Module({
   imports: [
@@ -44,7 +49,13 @@ import { EmailModule } from '@/email/email.module';
     AuthService,
     LocalStrategy, // Add LocalStrategy to providers so it can be used for validating user credentials during login
     JwtStrategy, // Add JwtStrategy to providers so it can be used globally or in specific routes to protect them with JWT authentication
-    GoogleStrategy
+    GoogleStrategy,
+    // Other services like TokenService, GoogleService, PasswordService, RegisterService are provided in their respective modules, so we don't need to add them here
+    TokenService,
+    OtpService,
+    RegisterService,
+    PasswordService,
+    GoogleService,
   ],
   exports: [AuthService]
 })

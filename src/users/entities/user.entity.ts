@@ -1,4 +1,4 @@
-import { Exclude, Transform, Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 
 export class UserEntity {
   id!: string;
@@ -17,7 +17,7 @@ export class UserEntity {
 
   roleId!: string;
   
-  roleName?: string | null;
+  roleName!: string;
 
   @Type(() => Date)
   createdAt!: Date;

@@ -11,13 +11,13 @@ import { plainToInstance } from 'class-transformer';
 import { UserEntity } from '@/users/entities/user.entity';
 import type { Response } from 'express';
 import ms from 'ms';
-import { CreateSessionDto } from '@/session/dto/create-session.dto';
 import { generateNumericOtp } from '@/common/otp/generate-otp';
 import { EmailService } from '@/email/email.service';
 import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
 
 @Injectable()
 export class AuthService {
+    private readonly defaultTypeAccount: string = 'local';
     private readonly CookieSameSite: 'lax' | 'strict' | 'none' = 'lax'; // You can adjust this based on your needs, defaulting is 'lax'
     private readonly refreshTokenName: string;
     private readonly expiresInRefresh: string;
@@ -71,6 +71,77 @@ export class AuthService {
         }
 
         this.defaultRoleName = this.configService.get<string>('NAME_ROLE_USER') || 'USER';
+    }
+
+    // check cooldown for otp in table peding_registration
+    private async checkResendCooldown(email: string): Promise<void> {
+        const now = new Date();
+        const pending = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+
+        if (pending?.resendAfter && pending.resendAfter > now) {
+            const remainingSeconds = Math.ceil((pending.resendAfter.getTime() - now.getTime()) / 1000);
+            throw new ConflictException(`Please wait ${remainingSeconds} seconds before requesting a new OTP.`);
+        }
+    }
+
+    // check pending registration exists, not expired and not locked by too many attempts
+    private async getValidPendingRegistration(email: string, purpose: string) {
+        const pending = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
+
+        if (!pending) {
+            throw new ConflictException(`No ${purpose} found for this email`);
+        }
+        if (pending.otpExpiresAt <= new Date()) {
+            await this.prismaService.pendingRegistration.delete({ where: { email } });
+            throw new ConflictException('OTP has expired');
+        }
+        if (pending.attemptCount >= this.otpMaxAttempts) {
+            await this.prismaService.pendingRegistration.delete({ where: { email } });
+            throw new ConflictException(`Too many incorrect attempts. Please request a new OTP after ${this.otpExpire}`);
+        }
+
+        return pending;
+    }
+
+    private async verifyOtpCode(email: string, otp: string, purpose: string) {
+        if (otp.length !== this.otpLength) {
+            throw new ConflictException(`OTP must be exactly ${this.otpLength} digits`);
+        }
+
+        // Check if pending registration exists and is valid (not expired, not locked)
+        const pending = await this.getValidPendingRegistration(email, purpose);
+        // Compare provided OTP with stored hash
+        const isValid = await comparePassword(otp, pending.otpHash);
+
+        if (!isValid) {
+            const updated = await this.prismaService.pendingRegistration.update({
+                where: { email },
+                data: { attemptCount: { increment: 1 } }
+            });
+
+            const remainingAttempts = this.otpMaxAttempts - updated.attemptCount;
+            if (remainingAttempts <= 0) {
+                throw new ConflictException('OTP has been locked due to too many incorrect attempts.');
+            }
+            throw new ConflictException(`Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`);
+        }
+
+        return pending;
+    }
+
+    // use this method for func login
+    private sanitizeUser(user: UserEntity): Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> {
+        return {
+            id: user.id,
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+            backgroundUrl: user.backgroundUrl,
+            description: user.description,
+            userName: user.userName,
+            accountType: user.accountType,
+            roleId: user.roleId,
+            roleName: user.roleName
+        };
     }
 
     private async generateOtpHashAndExpiration(): Promise<{ otp: string; otpHash: string; otpExpiresAt: Date; resendAfter: Date }> {
@@ -177,45 +248,8 @@ export class AuthService {
     async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<UserEntity> {
         try {
             const { email, otp } = verifyRegisterOtpDto;
-            if (otp.length !== this.otpLength) {
-                throw new ConflictException(`OTP must be exactly ${this.otpLength} digits`);
-            }
 
-
-            const pendingRegistration = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
-            if (!pendingRegistration) {
-                throw new ConflictException('No pending registration found for this email');
-            }
-            if (pendingRegistration.otpExpiresAt <= new Date()) {
-                throw new ConflictException('OTP has expired');
-            }
-            if (pendingRegistration.attemptCount >= this.otpMaxAttempts) {
-                throw new ConflictException(
-                    `OTP has been locked because too many incorrect attempts were made. Maximum allowed attempts is ${this.otpMaxAttempts}. Please request a new OTP after ${this.otpExpire} to continue.`,
-                );
-            }
-            const isOtpValid = await comparePassword(
-                otp,
-                pendingRegistration.otpHash,
-            );
-
-            if (!isOtpValid) {
-                const updatedPendingRegistration = await this.prismaService.pendingRegistration.update({
-                    where: { email: pendingRegistration.email },
-                    data: {
-                        attemptCount: {
-                            increment: 1,
-                        },
-                    },
-                });
-
-                const remainingAttempts = this.otpMaxAttempts - updatedPendingRegistration.attemptCount;
-
-                if (remainingAttempts <= 0) {
-                    throw new ConflictException('OTP has been locked because too many incorrect attempts were made.');
-                }
-                throw new ConflictException(`Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`);
-            }
+            const pendingRegistration = await this.verifyOtpCode(email, otp, 'pending registration');
 
             const existedUser = await this.prismaService.user.findFirst({
                 where: {
@@ -245,7 +279,7 @@ export class AuthService {
                         userName: pendingRegistration.userName,
                         password: pendingRegistration.passwordHash,
                         roleId: defaultRole.id,
-                        accountType: 'local',
+                        accountType: this.defaultTypeAccount,
                     },
                 });
 
@@ -284,13 +318,7 @@ export class AuthService {
             }
 
             // Check resend cooldown
-            if (pendingRegistration.resendAfter && pendingRegistration.resendAfter > now) {
-                const remainingMs = pendingRegistration.resendAfter.getTime() - now.getTime();
-                const remainingSeconds = Math.ceil(remainingMs / 1000);
-                throw new ConflictException(
-                    `You can only resend OTP after ${remainingSeconds} second(s). Please wait before requesting a new OTP.`,
-                );
-            }
+            await this.checkResendCooldown(email);
 
             // Reset attempt count on resend
             const { otpHash, otpExpiresAt, resendAfter, otp } = await this.generateOtpHashAndExpiration();
@@ -325,18 +353,9 @@ export class AuthService {
     async sendChangePasswordOtp(verifyEmailDto: VerifyEmailDto): Promise<{ otpExpire: string }> {
         try {
             const { email } = verifyEmailDto;
-            const now = new Date();
 
-            // 1. Kiểm tra cooldown
-            const existingPending = await this.prismaService.pendingRegistration.findUnique({
-                where: { email }
-            });
-
-            if (existingPending && existingPending.resendAfter && existingPending.resendAfter > now) {
-                const remainingMs = existingPending.resendAfter.getTime() - now.getTime();
-                const remainingSeconds = Math.ceil(remainingMs / 1000);
-                throw new ConflictException(`Please wait ${remainingSeconds} seconds before requesting a new OTP.`);
-            }
+            //check resend cooldown
+            await this.checkResendCooldown(email);
 
             // 2. Kiểm tra user tồn tại (không throw lỗi để bảo mật)
             const user = await this.prismaService.user.findUnique({ where: { email } });
@@ -402,56 +421,15 @@ export class AuthService {
         try {
             const { email, otp, newPassword } = changePasswordVerifyDto;
 
-            // 1. Validate OTP length
-            if (otp.length !== this.otpLength) {
-                throw new ConflictException(`OTP must be exactly ${this.otpLength} digits`);
-            }
-            // 2. Tìm pending registration
-            const pendingRegistration = await this.prismaService.pendingRegistration.findUnique({ where: { email } });
-            if (!pendingRegistration) {
-                throw new ConflictException('No OTP request found for this email. Please request a new OTP.');
-            }
-            // 3. Kiểm tra OTP expired
-            if (pendingRegistration.otpExpiresAt <= new Date()) {
-                // Xóa pending registration nếu đã hết hạn
-                await this.prismaService.pendingRegistration.delete({
-                    where: { email }
-                });
-                throw new ConflictException('OTP has expired. Please request a new OTP.');
-            }
-            // 4. Kiểm tra số lần thử sai
-            if (pendingRegistration.attemptCount >= this.otpMaxAttempts) {
-                // Xóa pending registration nếu vượt quá số lần thử
-                await this.prismaService.pendingRegistration.delete({
-                    where: { email }
-                });
-                throw new ConflictException(
-                    `Too many incorrect attempts. Please request a new OTP after ${this.otpExpire}.`
-                );
-            }
-            // 5. Verify OTP
-            const isOtpValid = await comparePassword(otp, pendingRegistration.otpHash);
-            if (!isOtpValid) {
-                // Tăng attempt count
-                const updatedPending = await this.prismaService.pendingRegistration.update({
-                    where: { email },
-                    data: { attemptCount: { increment: 1 } }
-                });
-                const remainingAttempts = this.otpMaxAttempts - updatedPending.attemptCount;
-                if (remainingAttempts <= 0) {
-                    throw new ConflictException('OTP has been locked due to too many incorrect attempts.');
-                }
-                throw new ConflictException(
-                    `Invalid OTP. You have ${remainingAttempts} attempt(s) remaining.`
-                );
-            }
-            // 6. Validate new password (optional - thêm validation nếu cần)
+            // 1. Verify OTP, 
+            await this.verifyOtpCode(email, otp, 'OTP requested for password change');
+            //2. check password length 
             if (!newPassword || newPassword.length < 6) {
                 throw new ValidationException('New password must be at least 6 characters long');
             }
-            // 7. Hash new password
+            // 3. Hash new password
             const newPasswordHash = await generatePasswordHash(newPassword, this.saltRounds);
-            // 8. Update password trong database
+            // 4. Update password trong database
             const updatedUser = await this.prismaService.$transaction(async (tx) => {
                 // Update user password
                 const user = await tx.user.update({
@@ -459,7 +437,7 @@ export class AuthService {
                     data: { password: newPasswordHash },
                     include: { role: true }
                 });
-                // Xóa pending registration sau khi thành công
+                // delete pending registration after successful password change
                 await tx.pendingRegistration.delete({
                     where: { email }
                 });
@@ -467,7 +445,7 @@ export class AuthService {
             });
             // destructure to separate role from user data
             const { role, ...userData } = updatedUser;
-            // 9. Chuyển đổi sang UserEntity
+            // 5. Convert to UserEntity
             return plainToInstance(UserEntity, {
                 ...userData,
                 roleName: updatedUser.role?.roleName ?? null
@@ -514,12 +492,12 @@ export class AuthService {
     async login(user: UserEntity, res: Response, deviceId: string): Promise<{ accessToken: string; user: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> }> {
         try {
             const refreshToken = await this.generateRefreshToken({ userId: user.id, _sub: user.roleName || user.email, deviceId });
-            const createSessionDto: CreateSessionDto = {
+
+            const setSessionDB = await this.sessionService.upsertSession({
                 userId: user.id,
                 refreshToken,
                 deviceId
-            };
-            const setSessionDB = await this.sessionService.upsertSession(createSessionDto);
+            });
             if (!setSessionDB) {
                 throw new ConflictException('Failed to create or update session in database');
             }
@@ -533,17 +511,7 @@ export class AuthService {
                 sameSite: this.CookieSameSite,
                 maxAge: ms(expiresInRefreshToken as ms.StringValue) // Set cookie expiration to match refresh token expiration
             })
-            const payload: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> = {
-                id: user.id,
-                email: user.email,
-                avatarUrl: user.avatarUrl,
-                backgroundUrl: user.backgroundUrl,
-                description: user.description,
-                userName: user.userName,
-                accountType: user.accountType,
-                roleId: user.roleId,
-                roleName: user.roleName
-            }
+            const payload = this.sanitizeUser(user);
             return { accessToken: this.jwtService.sign(payload), user: payload };
         } catch (error) {
             throw new InternalServerException(`Failed to login user: ${(error as Error).message}`);

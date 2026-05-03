@@ -104,7 +104,7 @@ export class AuthService {
     }
 
     async validateUser(userNameOrEmail: string, password: string) {
-        const user = await this.usersService.searchUserByEmailOrUsername(userNameOrEmail);
+        const user = await this.usersService.searchUserByEmailOrUsernameOrId(userNameOrEmail);
         if (!user) {
             return null;
         }
@@ -145,15 +145,16 @@ export class AuthService {
             }
             const session = await this.sessionService.findSessionByRefreshTokenAndDeviceId(oldCookieRefreshToken, decodedRefreshToken.deviceId);
             if (!session) {
+                res.clearCookie(this.refreshTokenName); // Clear invalid refresh token cookie in client
                 throw new ValidationException('Invalid refresh token or session not found');
             }
-            const userFetch = await this.prismaService.user.findUnique({ where: { id: session.userId }, include: { role: { select: { roleName: true } } } });
+            const userFetch = await this.usersService.searchUserByEmailOrUsernameOrId(decodedRefreshToken.userId);
             if (!userFetch || userFetch.id !== decodedRefreshToken.userId) {
+                res.clearCookie(this.refreshTokenName); // Clear invalid refresh token cookie in client
                 throw new ValidationException('User not found for the given refresh token');
             }
-            const { role, ...userData } = userFetch; // destructure to separate role from user data 
             res.clearCookie(this.refreshTokenName); // Clear old refresh token cookie
-            return await this.login(plainToInstance(UserEntity, { ...userData, roleName: userFetch.role ? userFetch.role.roleName : null }, { excludeExtraneousValues: false }), res, decodedRefreshToken.deviceId); // Reuse login logic to generate new tokens and set cookie
+            return await this.login(plainToInstance(UserEntity, userFetch, { excludeExtraneousValues: false }), res, decodedRefreshToken.deviceId); // Reuse login logic to generate new tokens and set cookie
         } catch (error: any) {
             throw new InternalServerException(`Failed to refresh token: ${error.message}`);
         }

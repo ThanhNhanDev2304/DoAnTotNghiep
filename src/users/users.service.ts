@@ -45,12 +45,13 @@ export class UsersService {
     return { exists: false };
   }
 
-  async searchUserByEmailOrUsername(emailOrUserName: string): Promise<UserEntity | null> {
+  async searchUserByEmailOrUsernameOrId(emailOrUserNameOrId: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
-          { email: emailOrUserName },
-          { userName: emailOrUserName }
+          { email: emailOrUserNameOrId },
+          { userName: emailOrUserNameOrId },
+          { id: emailOrUserNameOrId }
         ]
       },
         include: { role: { select: { roleName: true } } }

@@ -1,7 +1,5 @@
 import { IApiResponse } from "@/common/interceptors/transform.interceptor";
 import { UserImageType } from "@/users/enums/UserImageType.enum";
-import { plainToInstance } from "class-transformer";
-import { UserEntity } from "@/users/entities/user.entity";
 
 // Interface DTO
 export interface ICreateUserDto {
@@ -63,13 +61,4 @@ export interface IUsersService {
     updateRole(id: string, roleNameOrId: string): Promise<IUserEntity>;
     updateAvatarOrBG(id: string, fileAvatar: Express.Multer.File, updateUserAvatarOrBGDto: IUpdateUserAvatarOrBGDto): Promise<IUserEntity>;
     remove(id: string): Promise<IUserEntity>;
-}
-
-/** Map Prisma user (với role) → IUserEntity, tự động trích xuất roleName và loại bỏ field nhạy cảm */
-export function toUserEntity(user: { role?: { roleName: string } } & Record<string, any>): IUserEntity {
-    const { role, ...userData } = user;
-    return plainToInstance(UserEntity, {
-        ...userData,
-        roleName: role?.roleName ?? null,
-    }, { excludeExtraneousValues: false });
 }

@@ -9,7 +9,8 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { FilesService } from '@/files/files.service';
 import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
 import { UserImageType } from '@/users/enums/UserImageType.enum';
-import { IUsersService, toUserEntity } from '@/users/interfaces/users.interface';
+import { IUsersService } from '@/users/interfaces/users.interface';
+import { toUserEntity } from '@/users/helpers/toUserEntity.helper';
 
 @Injectable()
 export class UsersService implements IUsersService {

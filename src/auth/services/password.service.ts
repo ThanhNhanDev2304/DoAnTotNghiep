@@ -7,7 +7,8 @@ import { VerifyEmailDto, ChangePasswordVerifyDto } from '@/auth/dto/create-auth.
 import { generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { ConflictException, ValidationException } from '@/common/exceptions/app.exception';
 import { AccountType } from '@/common/enums/account-type.enum';
-import { IPasswordService, ISanitizedUser, sanitizeUser } from '@/auth/interfaces/auth.interface';
+import { IPasswordService, ISanitizedUser } from '@/auth/interfaces/auth.interface';
+import { sanitizeUser } from '@/auth/helpers/sanitize.helper';
 
 @Injectable()
 export class PasswordService implements IPasswordService {

@@ -6,7 +6,8 @@ import { Response } from 'express';
 import { ValidationException } from '@/common/exceptions/app.exception';
 import { CookieSameSite } from '@/common/enums/cookie-same-site.enum';
 import ms from 'ms';
-import { ISanitizedUser, ITokenService, sanitizeUser } from '@/auth/interfaces/auth.interface';
+import { ISanitizedUser, ITokenService } from '@/auth/interfaces/auth.interface';
+import { sanitizeUser } from '@/auth/helpers/sanitize.helper';
 
 @Injectable()
 export class TokenService implements ITokenService {

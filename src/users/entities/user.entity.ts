@@ -17,7 +17,7 @@ export class UserEntity implements IUserEntity {
   description?: string | null;
 
   roleId!: string;
-  
+
   roleName!: string;
 
   @Type(() => Date)

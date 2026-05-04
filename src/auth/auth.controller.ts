@@ -5,16 +5,15 @@ import { LoginDto, RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, Veri
 import type { Request, Response } from 'express';
 import { UserGoogle, User, DeviceId } from '@/common/decorators/user.decorator';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
-import { UserEntity } from '@/users/entities/user.entity';
 import { LocalAuthGuard } from '@/lib/passport/local-auth.guard';
 import { GoogleAuthGuard } from '@/lib/passport/google-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation } from '@nestjs/swagger';
-import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 import { ConflictException, InternalServerException, NotFoundException } from '@/common/exceptions/app.exception';
+import type { IAuthController, ISanitizedUser } from '@/auth/interfaces/auth.interface';
 
 @Controller('auth')
-export class AuthController {
+export class AuthController implements IAuthController {
     private readonly refreshTokenName: string;
     private readonly urlClient: string;
     constructor(
@@ -34,15 +33,15 @@ export class AuthController {
     @Public() // Mark this route as public, allowing access without JWT authentication.
     @ApiOperation({ summary: 'Register a new user' }) // Add Swagger documentation for this endpoint
     @Post('register')
-    async register(@Body() registerDto: RegisterDto): Promise<IApiResponse<any>> {
-        await this.authService.registerWithOTP(registerDto);
-        return { statusCode: 201, message: 'Registration initiated successfully. Please verify the OTP sent to your email to complete registration.', data: null };
+    async register(@Body() registerDto: RegisterDto) {
+        const result = await this.authService.registerWithOTP(registerDto);
+        return { statusCode: 201, message: 'Registration initiated successfully. Please verify the OTP sent to your email to complete registration.', data: result };
     }
 
     @Public()
     @Post('verify-register-otp')
     @ApiOperation({ summary: 'Verify OTP and complete account registration' })
-    async verifyRegisterOtp(@Body() verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<IApiResponse<UserEntity>> {
+    async verifyRegisterOtp(@Body() verifyRegisterOtpDto: VerifyRegisterOtpDto) {
         const user = await this.authService.verifyRegisterOtp(verifyRegisterOtpDto);
         return { statusCode: 200, message: 'Account verified and created successfully', data: user };
     }
@@ -50,7 +49,7 @@ export class AuthController {
     @Public()
     @Post('resend-register-otp')
     @ApiOperation({ summary: 'Resend OTP to registered email during registration process' })
-    async resendRegisterOtp(@Body() resendRegisterOtpDto: ResendRegisterOtpDto): Promise<IApiResponse<any>> {
+    async resendRegisterOtp(@Body() resendRegisterOtpDto: ResendRegisterOtpDto) {
         const data = await this.authService.resendRegisterOtp(resendRegisterOtpDto);
         return { statusCode: 200, message: 'OTP has been resent successfully to your email', data };
     }
@@ -59,7 +58,7 @@ export class AuthController {
     @UseGuards(LocalAuthGuard) // Apply the local authentication guard to this route
     @ApiOperation({ summary: 'Login a user for a session and cookie management' }) // Add Swagger documentation for this endpoint
     @Post('login')
-    async login(@Res({ passthrough: true }) res: Response, @User() user: UserEntity, @Body() loginDto: LoginDto, @DeviceId() deviceId: string): Promise<IApiResponse<any>> {
+    async login(@Res({ passthrough: true }) res: Response, @User() user: ISanitizedUser, @Body() loginDto: LoginDto, @DeviceId() deviceId: string) {
         const result = await this.authService.login(user, res, deviceId);
         return {
             statusCode: 200,
@@ -74,7 +73,7 @@ export class AuthController {
     @Public()
     @ApiOperation({ summary: 'Refresh access token using a valid refresh token stored in cookies' }) // Add Swagger documentation for this endpoint
     @Post('refresh')
-    async refreshToken(@Res({ passthrough: true }) res: Response, @Req() req: Request): Promise<IApiResponse<any>> {
+    async refreshToken(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
         const oldCookieRefreshToken = req.cookies[this.refreshTokenName];
         if (!oldCookieRefreshToken) {
             throw new ConflictException('Refresh token is missing in cookies');
@@ -92,7 +91,7 @@ export class AuthController {
 
     @Get('profile')
     @ApiOperation({ summary: 'Get the profile of the currently authenticated user' }) // Add Swagger documentation for this endpoint
-    async getProfile(@User() user: UserEntity): Promise<IApiResponse<any>> {
+    async getProfile(@User() user: ISanitizedUser) {
         try {
             return {
                 statusCode: 200,
@@ -109,7 +108,7 @@ export class AuthController {
     @Public()
     @Post('change-password/send-otp')
     @ApiOperation({ summary: 'Change password for the currently authenticated user' }) // Add Swagger documentation for this endpoint
-    async changePasswordWithOtp(@Body() verifyEmailDto: VerifyEmailDto): Promise<IApiResponse<any>> {
+    async changePasswordWithOtp(@Body() verifyEmailDto: VerifyEmailDto) {
         const result = await this.authService.sendChangePasswordOtp(verifyEmailDto);
         return {
             statusCode: 200,
@@ -121,7 +120,7 @@ export class AuthController {
     @Public()
     @Post('change-password/verify-otp')
     @ApiOperation({ summary: 'Verify OTP and change password for the currently authenticated user' }) // Add Swagger documentation for this endpoint
-    async verifyChangePasswordOtp(@Body() changePasswordVerifyDto: ChangePasswordVerifyDto): Promise<IApiResponse<UserEntity>> {
+    async verifyChangePasswordOtp(@Body() changePasswordVerifyDto: ChangePasswordVerifyDto) {
         const user = await this.authService.verifyChangePasswordOtp(changePasswordVerifyDto);
         return {
             statusCode: 200,
@@ -132,7 +131,7 @@ export class AuthController {
 
     @Post('logout')
     @ApiOperation({ summary: 'Logout the currently authenticated user' }) // Add Swagger documentation for this endpoint
-    async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request, @User() user: UserEntity): Promise<IApiResponse<any>> {
+    async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request, @User() user: ISanitizedUser) {
         const oldCookieRefreshToken = req.cookies[this.refreshTokenName];
         if (!oldCookieRefreshToken) {
             throw new NotFoundException('Refresh token is missing in cookies');
@@ -147,7 +146,7 @@ export class AuthController {
 
     @Post('logout-all')
     @ApiOperation({ summary: 'Logout the currently authenticated user from all devices' }) // Add Swagger documentation for this endpoint
-    async logoutAll(@Res({ passthrough: true }) res: Response, @User() user: UserEntity): Promise<IApiResponse<any>> {
+    async logoutAll(@Res({ passthrough: true }) res: Response, @User() user: ISanitizedUser) {
         const result: boolean = await this.authService.logoutAll(user, res);
         return {
             statusCode: 200,
@@ -168,7 +167,7 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     @Get('google/callback')
     @ApiOperation({ summary: 'Google Auth Callback' })
-    async googleAuthRedirect(@UserGoogle() googleUser: GoogleUser, @DeviceId() deviceId: string, @Res({ passthrough: true }) res: Response): Promise<void | IApiResponse<any>> {
+    async googleAuthRedirect(@UserGoogle() googleUser: GoogleUser, @DeviceId() deviceId: string, @Res({ passthrough: true }) res: Response) {
         const result = await this.authService.googleLogin(googleUser, res, deviceId);
         // Sau khi đăng nhập thành công, bạn thường sẽ muốn redirect người dùng về giao diện Frontend
         // Ví dụ: return res.redirect('http://localhost:3000/dashboard');

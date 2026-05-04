@@ -6,17 +6,16 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterDto, VerifyRegisterOtpDto, ResendRegisterOtpDto, VerifyEmailDto, ChangePasswordVerifyDto } from '@/auth/dto/create-auth.dto';
 import type { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { comparePassword } from '@/lib/bcrypt/bcrypt';
-import { plainToInstance } from 'class-transformer';
-import { UserEntity } from '@/users/entities/user.entity';
 import type { Response } from 'express';
 import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
 import { TokenService } from '@/auth/services/token.service';
 import { GoogleService } from '@/auth/services/google.service';
 import { PasswordService } from '@/auth/services/password.service';
 import { RegisterService } from '@/auth/services/register.service';
+import { IAuthService, ISanitizedUser } from '@/auth/interfaces/auth.interface';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements IAuthService {
     private readonly refreshTokenName: string;
     private readonly refreshTokenSecret: string;
 
@@ -44,7 +43,7 @@ export class AuthService {
         }
     }
 
-    async registerWithOTP(registerDto: RegisterDto): Promise<{ otpExpire: string }> {
+    async registerWithOTP(registerDto: RegisterDto) {
         try {
             return this.registerService.register(registerDto);
         } catch (error: any) {
@@ -55,7 +54,7 @@ export class AuthService {
         }
     }
 
-    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto): Promise<UserEntity> {
+    async verifyRegisterOtp(verifyRegisterOtpDto: VerifyRegisterOtpDto) {
         try {
             return this.registerService.verifyOtp(verifyRegisterOtpDto);
         } catch (error: any) {
@@ -66,7 +65,7 @@ export class AuthService {
         }
     }
 
-    async resendRegisterOtp(resendRegisterOtpDto: ResendRegisterOtpDto): Promise<{ otpExpire: string }> {
+    async resendRegisterOtp(resendRegisterOtpDto: ResendRegisterOtpDto) {
         try {
             return this.registerService.resendOtp(resendRegisterOtpDto.email);
         } catch (error) {
@@ -77,7 +76,7 @@ export class AuthService {
         }
     }
 
-    async sendChangePasswordOtp(verifyEmailDto: VerifyEmailDto): Promise<{ otpExpire: string }> {
+    async sendChangePasswordOtp(verifyEmailDto: VerifyEmailDto) {
         try {
             return this.passwordService.sendOtp(verifyEmailDto);
         } catch (error: any) {
@@ -88,7 +87,7 @@ export class AuthService {
         }
     }
 
-    async verifyChangePasswordOtp(changePasswordVerifyDto: ChangePasswordVerifyDto): Promise<UserEntity> {
+    async verifyChangePasswordOtp(changePasswordVerifyDto: ChangePasswordVerifyDto) {
         try {
             return this.passwordService.verifyAndChange(changePasswordVerifyDto);
         } catch (error: any) {
@@ -116,10 +115,10 @@ export class AuthService {
         if (!authPass) {
             return null;
         }
-        return plainToInstance(UserEntity, user, { excludeExtraneousValues: false });
+        return user as ISanitizedUser;
     }
 
-    async login(user: UserEntity, res: Response, deviceId: string): Promise<{ accessToken: string; user: Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> }> {
+    async login(user: ISanitizedUser, res: Response, deviceId: string) {
         try {
             return this.tokenService.login(user, res, deviceId);
         } catch (error: any) {
@@ -152,14 +151,14 @@ export class AuthService {
                 throw new ValidationException('User not found for the given refresh token');
             }
             res.clearCookie(this.refreshTokenName); // Clear old refresh token cookie
-            return await this.login(plainToInstance(UserEntity, userFetch, { excludeExtraneousValues: false }), res, decodedRefreshToken.deviceId); // Reuse login logic to generate new tokens and set cookie
+            return await this.login(userFetch as ISanitizedUser, res, decodedRefreshToken.deviceId); // Reuse login logic to generate new tokens and set cookie
         } catch (error: any) {
             throw new InternalServerException(`Failed to refresh token: ${error.message}`);
         }
     }
 
     // Google login flow:
-    async googleLogin(googleUser: GoogleUser, res: Response, deviceId: string,) {
+    async googleLogin(googleUser: GoogleUser, res: Response, deviceId: string) {
         try {
             return this.googleService.login(googleUser, res, deviceId);
         } catch (error) {
@@ -167,7 +166,7 @@ export class AuthService {
         }
     }
 
-    async logout(user: UserEntity, oldCookieRefreshToken: string, res: Response): Promise<boolean> {
+    async logout(user: ISanitizedUser, oldCookieRefreshToken: string, res: Response) {
         try {
             return this.tokenService.logout(user.id, oldCookieRefreshToken, res);
         } catch (error: any) {
@@ -175,7 +174,7 @@ export class AuthService {
         }
     }
 
-    async logoutAll(user: UserEntity, res: Response): Promise<boolean> {
+    async logoutAll(user: ISanitizedUser, res: Response) {
         try {
             return this.tokenService.logoutAll(user.id, res);
         } catch (error: any) {

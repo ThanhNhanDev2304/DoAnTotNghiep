@@ -6,12 +6,13 @@ import { RoleEntity } from '@/role/entities/role.entity';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { InternalServerException, NotFoundException, ConflictException, ValidationException } from '@/common/exceptions/app.exception';
+import { IRoleService } from '@/role/interfaces/role.interface';
 
 @Injectable()
-export class RoleService {
+export class RoleService implements IRoleService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async findRoleIdByName(roleNameOrId: string): Promise<string | null> {
+  async findRoleIdByName(roleNameOrId: string) {
     try {
       // Thử tìm bằng roleName trước
       let role = await this.prisma.role.findUnique({
@@ -34,7 +35,7 @@ export class RoleService {
     }
   }
 
-  async create(createRoleDto: CreateRoleDto): Promise<RoleEntity> {
+  async create(createRoleDto: CreateRoleDto) {
     try {
       const newRole = await this.prisma.role.create({
         data: createRoleDto,
@@ -49,11 +50,9 @@ export class RoleService {
     }
   }
 
-  async findAll(): Promise<RoleEntity[]> {
+  async findAll() {
     try {
-      const roles = await this.prisma.role.findMany({
-        include: { users: true },
-      });
+      const roles = await this.prisma.role.findMany();
       // Transform to Entity instances (for @Expose() and @Exclude() to work)
       return roles.map(role => plainToInstance(RoleEntity, role, { excludeExtraneousValues: false }));
     } catch (error: any) {
@@ -61,7 +60,7 @@ export class RoleService {
     }
   }
 
-  async findOne(id: string): Promise<RoleEntity> {
+  async findOne(id: string) {
     try {
       const role = await this.prisma.role.findUnique({
         where: { id },
@@ -79,7 +78,7 @@ export class RoleService {
     }
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto): Promise<RoleEntity> {
+  async update(id: string, updateRoleDto: UpdateRoleDto) {
     try {
       const role = await this.prisma.role.findUnique({
         where: { id },
@@ -110,7 +109,7 @@ export class RoleService {
     }
   }
 
-  async remove(id: string): Promise<RoleEntity> {
+  async remove(id: string) {
     try {
       const role = await this.prisma.role.findUnique({
         where: { id },

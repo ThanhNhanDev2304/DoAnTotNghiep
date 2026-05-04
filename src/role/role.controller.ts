@@ -6,10 +6,11 @@ import { UpdateRoleDto } from '@/role/dto/update-role.dto';
 import { RoleEntity } from '@/role/entities/role.entity';
 import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 import { AdminOnly } from '@/common/decorators/metadata';
+import { IRoleController } from '@/role/interfaces/role.interface';
 
 @AdminOnly()
 @Controller('role')
-export class RoleController {
+export class RoleController implements IRoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()

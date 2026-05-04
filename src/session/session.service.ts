@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
-import { UpdateSessionDto } from '@/session/dto/update-session.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { SessionEntity } from '@/session/entities/session.entity';
+import { ISessionService } from '@/session/interfaces/session.interface';
 
 @Injectable()
-export class SessionService {
+export class SessionService implements ISessionService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService

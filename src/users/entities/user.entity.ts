@@ -1,6 +1,7 @@
 import { Exclude, Type } from 'class-transformer';
+import { IUserEntity } from '@/users/interfaces/users.interface';
 
-export class UserEntity {
+export class UserEntity implements IUserEntity {
   id!: string;
   email!: string;
   userName!: string;

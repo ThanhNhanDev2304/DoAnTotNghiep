@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserAvatarOrBGDto, UpdateUserDto, UserImageType } from '@/users/dto/update-user.dto';
+import { UpdateUserAvatarOrBGDto, UpdateUserDto } from '@/users/dto/update-user.dto';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UserEntity } from '@/users/entities/user.entity';
 import { RoleService } from '@/role/role.service';
 import { ConfigService } from '@nestjs/config';
 import { ensurePasswordHash } from '@/lib/bcrypt/bcrypt';
-import { plainToInstance } from 'class-transformer';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { FilesService } from '@/files/files.service';
 import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
+import { UserImageType } from '@/users/enums/UserImageType.enum';
+import { IUsersService, toUserEntity } from '@/users/interfaces/users.interface';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements IUsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly roleService: RoleService,
@@ -20,7 +20,7 @@ export class UsersService {
     private readonly filesService: FilesService
   ) { }
 
-  async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string): Promise<{ exists: boolean; field?: 'email' | 'username' }> {
+  async checkEmailOrUsernameExists(email: string, userName: string, excludeId?: string) {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -31,21 +31,19 @@ export class UsersService {
       }
     });
     if (!user) {
-      return { exists: false };
+      return { exists: false, field: undefined };
     }
-
     if (user.email === email) {
-      return { exists: true, field: 'email' };
+      return { exists: true, field: 'email' as const };
     }
-
     if (user.userName === userName) {
-      return { exists: true, field: 'username' };
+      return { exists: true, field: 'username' as const };
     }
-
-    return { exists: false };
+    return { exists: false, field: undefined };
   }
 
-  async searchUserByEmailOrUsernameOrId(emailOrUserNameOrId: string): Promise<UserEntity | null> {
+  // can tra ve pass de validate trong auth service
+  async searchUserByEmailOrUsernameOrId(emailOrUserNameOrId: string) {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -58,10 +56,10 @@ export class UsersService {
     });
     if (!user) return null;
     const { role, ...userData } = user || {}; // destructure to separate role from user data
-    return { ...userData, roleName: user?.role?.roleName } as UserEntity;
+    return { ...userData, roleName: user?.role?.roleName };
   }
 
-  async create(createUserDto: CreateUserDto): Promise<UserEntity> {
+  async create(createUserDto: CreateUserDto) {
     try {
       const checkEmailOrUsername = await this.checkEmailOrUsernameExists(createUserDto.email, createUserDto.userName);
       if (checkEmailOrUsername.exists) {
@@ -86,8 +84,7 @@ export class UsersService {
         },
         include: { role: { select: { roleName: true } } }
       });
-      const { role, ...userData } = newUser; // destructure to separate role from user data
-      return newUser ? plainToInstance(UserEntity, {...userData, roleName: newUser.role?.roleName, }, { excludeExtraneousValues: false }) : new UserEntity();
+      return toUserEntity(newUser);
     } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException(`Error creating user: ${error.message}`);
@@ -99,13 +96,10 @@ export class UsersService {
     }
   }
 
-  async findAll(): Promise<UserEntity[]> {
+  async findAll() {
     try {
       const listUsers = await this.prisma.user.findMany({include: { role: {select: { roleName: true }} } });
-      return listUsers ? listUsers.map(user => {
-        const { role, ...userData } = user; // destructure to separate role from user data
-        return plainToInstance(UserEntity, {...userData, roleName: user.role?.roleName, }, { excludeExtraneousValues: false });
-      }) : [];
+      return listUsers ? listUsers.map(user => toUserEntity(user)) : [];
     } catch (error: any) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
         throw new NotFoundException('Database error: ' + error.message);
@@ -114,7 +108,7 @@ export class UsersService {
     }
   }
 
-  async findOne(id: string): Promise<UserEntity> {
+  async findOne(id: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -123,14 +117,13 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
-      const { role, ...userData } = user; // destructure to separate role from user data
-      return plainToInstance(UserEntity, {...userData, roleName: user.role?.roleName, }, { excludeExtraneousValues: false });
+      return toUserEntity(user);
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -152,14 +145,13 @@ export class UsersService {
         data: updateUserDto,
         include: { role: { select: { roleName: true } } }
       });
-      const { role, ...userData } = updatedUser; // destructure to separate role from user data
-      return plainToInstance(UserEntity, {...userData, roleName: updatedUser.role?.roleName, }, { excludeExtraneousValues: false });
+      return toUserEntity(updatedUser);
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
   }
 
-  async updateRole(id: string, roleNameOrId: string): Promise<UserEntity> {
+  async updateRole(id: string, roleNameOrId: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -177,15 +169,13 @@ export class UsersService {
         data: { roleId },
         include: { role: { select: { roleName: true } } }
       });
-      const { role, ...userData } = updatedUser; // destructure to separate role from user data
-      return plainToInstance(UserEntity, {...userData, roleName: updatedUser.role?.roleName, }, { excludeExtraneousValues: false });
+      return toUserEntity(updatedUser);
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
   }
 
-
-  async remove(id: string): Promise<UserEntity> {
+  async remove(id: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -197,14 +187,13 @@ export class UsersService {
       await this.prisma.user.delete({
         where: { id }
       });
-      const { role, ...userData } = user; // destructure to separate role from user data
-      return plainToInstance(UserEntity, {...userData, roleName: user.role?.roleName, }, { excludeExtraneousValues: false });
+      return toUserEntity(user);
     } catch (error: any) {
       throw new InternalServerException(error.message);
     }
   }
 
-  async updateAvatarOrBG(id: string, fileAvatar: Express.Multer.File, updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto): Promise<UserEntity> {
+  async updateAvatarOrBG(id: string, fileAvatar: Express.Multer.File, updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -223,8 +212,7 @@ export class UsersService {
         },
         include: { role: { select: { roleName: true } } }
       });
-      const { role, ...userData } = updatedUser; // destructure to separate role from user data
-      return plainToInstance(UserEntity, {...userData, roleName: updatedUser.role?.roleName, }, { excludeExtraneousValues: false });
+      return toUserEntity(updatedUser);
 
     } catch (error: any) {
       console.error('Error updating user avatar:', error);

@@ -5,14 +5,13 @@ import { UsersService } from '@/users/users.service';
 import { EmailService } from '@/email/email.service';
 import { RegisterDto, VerifyRegisterOtpDto } from '@/auth/dto/create-auth.dto';
 import { generatePasswordHash } from '@/lib/bcrypt/bcrypt';
-import { plainToInstance } from 'class-transformer';
-import { UserEntity } from '@/users/entities/user.entity';
 import { ConflictException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
 import { AccountType } from '@/common/enums/account-type.enum';
 import { OtpService } from '@/auth/services/otp.service';
+import { IRegisterService, ISanitizedUser, sanitizeUser } from '@/auth/interfaces/auth.interface';
 
 @Injectable()
-export class RegisterService {
+export class RegisterService implements IRegisterService {
     private readonly defaultRoleName: string;
     private readonly saltRounds: number;
     private readonly otpExpire: string;
@@ -86,7 +85,7 @@ export class RegisterService {
         return { otpExpire: this.otpExpire };
     }
 
-    async verifyOtp(dto: VerifyRegisterOtpDto): Promise<UserEntity> {
+    async verifyOtp(dto: VerifyRegisterOtpDto): Promise<ISanitizedUser> {
         const { email, otp } = dto;
         const pending = await this.otpService.verify(email, otp, 'pending registration');
 
@@ -119,7 +118,10 @@ export class RegisterService {
             await tx.pendingRegistration.delete({ where: { email: pending.email } });
             return user;
         });
-        return plainToInstance(UserEntity, createdUser, { excludeExtraneousValues: false });
+        return sanitizeUser({
+            ...createdUser,
+            roleName: this.defaultRoleName,
+        } as ISanitizedUser);
     }
 
     async resendOtp(email: string): Promise<{ otpExpire: string }> {

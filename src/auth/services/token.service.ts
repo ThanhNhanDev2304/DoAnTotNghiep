@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { SessionService } from '@/session/session.service';
-import { UserEntity } from '@/users/entities/user.entity';
 import { Response } from 'express';
 import { ValidationException } from '@/common/exceptions/app.exception';
 import { CookieSameSite } from '@/common/enums/cookie-same-site.enum';
 import ms from 'ms';
+import { ISanitizedUser, ITokenService, sanitizeUser } from '@/auth/interfaces/auth.interface';
 
 @Injectable()
-export class TokenService {
+export class TokenService implements ITokenService {
     private readonly refreshTokenName: string;
     private readonly expiresInRefresh: string;
     private readonly refreshTokenSecret: string;
@@ -40,12 +40,7 @@ export class TokenService {
         return this.jwtService.sign(payload, { expiresIn: expiresInMs, secret: this.refreshTokenSecret });
     }
 
-    sanitizeUser(user: UserEntity): Omit<UserEntity, 'password' | 'createdAt' | 'updatedAt'> {
-        const { password, createdAt, updatedAt, sessions, ...safeUser } = user; // drop password, createdAt, updatedAt, sessions
-        return safeUser;
-    }
-
-    async login(user: UserEntity, res: Response, deviceId: string) {
+    async login(user: ISanitizedUser, res: Response, deviceId: string) {
         const refreshToken = await this.generateRefreshToken({
             userId: user.id,
             _sub: {
@@ -67,7 +62,7 @@ export class TokenService {
             maxAge: ms(this.expiresInRefresh as ms.StringValue)
         });
 
-        const payload = this.sanitizeUser(user);
+        const payload = sanitizeUser(user);
         return { accessToken: this.jwtService.sign(payload), user: payload };
     }
 

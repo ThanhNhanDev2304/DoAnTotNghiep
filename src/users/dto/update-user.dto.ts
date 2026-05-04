@@ -2,6 +2,7 @@ import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { IsEnum, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserImageType } from '@/users/enums/UserImageType.enum';
 
 export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['password', 'roleName'] as const)) {
     @ApiProperty({ description: 'The description of the user', example: 'This is a user description' })
@@ -17,10 +18,6 @@ export class UpdateUserRoleDto {
     roleNameOrId!: string;
 }
 
-export enum UserImageType {
-    AVATAR = 'avatar',
-    BACKGROUND = 'background',
-}
 
 export class UpdateUserAvatarOrBGDto {
     @ApiProperty({
@@ -28,8 +25,6 @@ export class UpdateUserAvatarOrBGDto {
         enum: UserImageType,
         example: UserImageType.AVATAR,
     })
-    @IsEnum(UserImageType, {
-        message: 'Type must be either avatar or background',
-    })
+    @IsEnum(UserImageType, { message: 'Type must be either avatar or background' })
     typeImg!: UserImageType;
 }

@@ -5,9 +5,10 @@ import { comparePassword, generatePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { generateNumericOtp } from '@/common/otp/generate-otp';
 import { ConflictException } from '@/common/exceptions/app.exception';
 import ms from 'ms';
+import { IOtpService } from '@/auth/interfaces/auth.interface';
 
 @Injectable()
-export class OtpService {
+export class OtpService implements IOtpService {
     private readonly saltRounds: number;
     private readonly otpExpire: string;
     private readonly otpLength: number;

@@ -3,14 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { TokenService } from '@/auth/services/token.service';
 import { GoogleUser } from '@/auth/passport/google/google-user.interface';
-import { plainToInstance } from 'class-transformer';
-import { UserEntity } from '@/users/entities/user.entity';
 import { ConflictException, NotFoundException } from '@/common/exceptions/app.exception';
 import { AccountType } from '@/common/enums/account-type.enum';
 import { Response } from 'express';
+import { IGoogleService, ISanitizedUser } from '@/auth/interfaces/auth.interface';
 
 @Injectable()
-export class GoogleService {
+export class GoogleService implements IGoogleService {
     private readonly defaultRoleName: string;
 
     constructor(
@@ -27,7 +26,7 @@ export class GoogleService {
     async login(googleUser: GoogleUser, res: Response, deviceId: string) {
         let user = await this.prismaService.user.findUnique({
             where: { email: googleUser.email },
-            include: { role: true },
+            include: { role: { select: { roleName: true } } },
         });
 
         if (user && user.accountType === AccountType.LOCAL) {
@@ -37,13 +36,13 @@ export class GoogleService {
         if (!user) {
             user = await this.createGoogleUser(googleUser);
         }
-
-        const userEntity = plainToInstance(UserEntity, {
+        //conver type user tu prisma thanh ISanitizedUser de truyen vao tokenService.login
+        const sanitizedUser = {
             ...user,
             roleName: user.role?.roleName ?? null,
-        });
+        } as ISanitizedUser;
 
-        return this.tokenService.login(userEntity, res, deviceId);
+        return this.tokenService.login(sanitizedUser, res, deviceId);
     }
 
     private async createGoogleUser(googleUser: GoogleUser) {
@@ -65,7 +64,7 @@ export class GoogleService {
                 roleId: defaultRole.id,
                 password: null,
             },
-            include: { role: true },
+            include: { role: { select: { roleName: true } } },
         });
     }
 }

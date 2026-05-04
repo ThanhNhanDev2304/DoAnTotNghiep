@@ -1,50 +1,50 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UsersService } from '@/users/users.service';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { UpdateUserAvatarOrBGDto, UpdateUserDto, UpdateUserRoleDto, UserImageType } from '@/users/dto/update-user.dto';
+import { UpdateUserAvatarOrBGDto, UpdateUserDto, UpdateUserRoleDto } from '@/users/dto/update-user.dto';
 import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
-import { UserEntity } from '@/users/entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ValidationException } from '@/common/exceptions/app.exception';
-import { IApiResponse } from '@/common/interceptors/transform.interceptor';
 import { AdminOnly } from '@/common/decorators/metadata';
+import { UserImageType } from '@/users/enums/UserImageType.enum';
+import { IUsersController } from '@/users/interfaces/users.interface';
 
 @AdminOnly() // Mark the entire controller as admin-only, meaning all routes in this controller require admin privileges to access.
 @Controller('users')
-export class UsersController {
+export class UsersController implements IUsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
-  async create(@Body() createUserDto: CreateUserDto): Promise<IApiResponse<UserEntity>> {
+  async create(@Body() createUserDto: CreateUserDto) {
     const data = await this.usersService.create(createUserDto);
     return { statusCode: 200, message: 'User created successfully', data };
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })
-  async findAll(): Promise<IApiResponse<UserEntity[]>> {
+  async findAll() {
     const result = await this.usersService.findAll();
     return { statusCode: 200, message: 'Users retrieved successfully', data: result };
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a user by ID' })
-  async findOne(@Param('id') id: string): Promise<IApiResponse<UserEntity>> {
+  async findOne(@Param('id') id: string) {
     const result = await this.usersService.findOne(id);
     return { statusCode: 200, message: 'User retrieved successfully', data: result };
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a user' })
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<IApiResponse<UserEntity>> {
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     const result = await this.usersService.update(id, updateUserDto);
     return { statusCode: 200, message: 'User updated successfully', data: result };
   }
 
   @Patch('role/:id')
   @ApiOperation({ summary: 'Update a user\'s role' })
-  async updateRole(@Param('id') id: string, @Body() role: UpdateUserRoleDto): Promise<IApiResponse<UserEntity>> {
+  async updateRole(@Param('id') id: string, @Body() role: UpdateUserRoleDto) {
     const result = await this.usersService.updateRole(id, role.roleNameOrId);
     return { statusCode: 200, message: 'User role updated successfully', data: result };
   }
@@ -69,7 +69,7 @@ export class UsersController {
     },
   })
   @UseInterceptors(FileInterceptor('imgProfile')) // Tên trường file trong form-data phải trùng với tên này
-  async updateAvatar(@Param('id') id: string, @UploadedFile() imgProfile: Express.Multer.File, @Body() updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto): Promise<IApiResponse<UserEntity>> {
+  async updateAvatarOrBG(@Param('id') id: string, @UploadedFile() imgProfile: Express.Multer.File, @Body() updateUserAvatarOrBGDto: UpdateUserAvatarOrBGDto) {
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
     const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
     if (!imgProfile) {
@@ -92,7 +92,7 @@ export class UsersController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
   // @ApiResponse({ status: 200, description: 'User deleted successfully', type: UserEntity })
-  async remove(@Param('id') id: string): Promise<IApiResponse<UserEntity>> {
+  async remove(@Param('id') id: string) {
     const result = await this.usersService.remove(id);
     return { statusCode: 200, message: 'User deleted successfully', data: result };
   }

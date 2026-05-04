@@ -5,13 +5,12 @@ import { EmailService } from '@/email/email.service';
 import { OtpService } from '@/auth/services/otp.service';
 import { VerifyEmailDto, ChangePasswordVerifyDto } from '@/auth/dto/create-auth.dto';
 import { generatePasswordHash } from '@/lib/bcrypt/bcrypt';
-import { plainToInstance } from 'class-transformer';
-import { UserEntity } from '@/users/entities/user.entity';
 import { ConflictException, ValidationException } from '@/common/exceptions/app.exception';
 import { AccountType } from '@/common/enums/account-type.enum';
+import { IPasswordService, ISanitizedUser, sanitizeUser } from '@/auth/interfaces/auth.interface';
 
 @Injectable()
-export class PasswordService {
+export class PasswordService implements IPasswordService {
     private readonly saltRounds: number;
     private readonly otpExpire: string;
 
@@ -60,7 +59,7 @@ export class PasswordService {
         return { otpExpire: this.otpExpire };
     }
 
-    async verifyAndChange(dto: ChangePasswordVerifyDto): Promise<UserEntity> {
+    async verifyAndChange(dto: ChangePasswordVerifyDto): Promise<ISanitizedUser> {
         const { email, otp, newPassword } = dto;
 
         await this.otpService.verify(email, otp, 'OTP requested for password change');
@@ -75,15 +74,14 @@ export class PasswordService {
             const user = await tx.user.update({
                 where: { email },
                 data: { password: newPasswordHash },
-                include: { role: true }
+                include: { role: { select: { roleName: true } } },
             });
             await tx.pendingRegistration.delete({ where: { email } });
             return user;
         });
-        const { role, ...UserDelRole } = updatedUser;
-        return plainToInstance(UserEntity, {
-            ...UserDelRole,
-            roleName: updatedUser.role?.roleName ?? null
-        });
+        return sanitizeUser({
+            ...updatedUser,
+            roleName: updatedUser.role?.roleName ?? null,
+        } as ISanitizedUser);
     }
 }

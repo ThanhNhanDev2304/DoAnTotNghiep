@@ -786,6 +786,29 @@ Make sure EmailModule is imported in `app.module.ts`:
 - Service is exported from module for use in other modules
 - All email methods are logged for debugging
 
+## 10 Add Redis Cache with NestJS and Prisma
+- With redis I will use serverless database service from Upstash, you can create a Redis database on Upstash and get the connection URL to use in your NestJS application.
+- First, install the required libraries:
+```bash
+  pnpm i @upstash/redis
+  pnpm add -D @types/jest
+```
+- Create a new module for Redis:
+```bash
+  nest g module redis
+  nest g service redis
+```
 
-
-
+- Testing for project, we need to install some libraries:
+```bash
+  pnpm add -D @types/jest
+```
+and setup tsconfig for testing in `tsconfig.json`:
+```json
+  {
+    "compilerOptions": {
+      // ... other options
+      "types": ["jest", "node"]
+    }
+  }
+```

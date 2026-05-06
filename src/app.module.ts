@@ -8,11 +8,10 @@ import { RoleModule } from '@/role/role.module';
 import { SeedDbModule } from '@/seed-db/seed-db.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@/auth/auth.module';
-import { FilesModule } from './files/files.module';
+import { FilesModule } from '@/files/files.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { JobsModule } from './jobs/jobs.module';
-import { EmailModule } from './email/email.module';
-import { RedisModule } from './redis/redis.module';
+import { JobsModule } from '@/jobs/jobs.module';
+import { EmailModule } from '@/email/email.module';
 
 @Module({
   imports: [
@@ -23,7 +22,7 @@ import { RedisModule } from './redis/redis.module';
     UsersModule, PrismaModule, SessionModule, RoleModule, 
     SeedDbModule /*Module to seed the database with initial data on application startup*/,
     ScheduleModule.forRoot(), /* Enable scheduling capabilities for tasks like cleaning up expired sessions */
-    AuthModule, FilesModule, JobsModule, EmailModule, RedisModule
+    AuthModule, FilesModule, JobsModule, EmailModule
   ],
   controllers: [AppController],
   providers: [AppService],

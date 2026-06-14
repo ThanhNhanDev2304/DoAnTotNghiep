@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger"
-import { IsEmail, IsNotEmpty, IsString, Length, Matches, MaxLength, MinLength } from "class-validator"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches, MaxLength, MinLength } from "class-validator"
 
 export class RegisterDto {
 
@@ -25,6 +25,33 @@ export class RegisterDto {
     @MaxLength(50, { message: 'Password must be at most 50 characters long' })
     @MinLength(6, { message: 'Password must be at least 6 characters long' })
     password!: string
+
+    @ApiProperty({ example: 'Nguyễn Văn A', description: 'Full name of the employee' })
+    @IsNotEmpty({ message: 'Full name must not be empty' })
+    @IsString()
+    @MaxLength(100)
+    fullName!: string
+
+    @ApiPropertyOptional({ example: '0901234567' })
+    @IsOptional()
+    @IsString()
+    @MaxLength(20)
+    phone?: string
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    departmentId?: string
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    positionId?: string
+
+    @ApiPropertyOptional({ example: false, description: 'true nếu là sinh viên thực tập' })
+    @IsOptional()
+    @IsBoolean()
+    isIntern?: boolean
 }
 
 export class VerifyRegisterOtpDto {

@@ -1,29 +1,69 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString,
+  IsUUID, MaxLength, MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
-    @ApiProperty({ description: 'The email of the user', example: 'user@example.com' })
-    @IsEmail({}, { message: 'Invalid email address' })
-    email!: string;
+  @ApiProperty({ example: 'user@umc.com' })
+  @IsEmail({}, { message: 'Email không hợp lệ' })
+  email!: string;
 
-    @ApiProperty({ description: 'The password of the user', example: 'P@ssw0rd' })
-    @IsNotEmpty({ message: 'Password is required' })
-    @MaxLength(100, { message: 'Password must be at most 100 characters' })
-    @MinLength(6, { message: 'Password must be at least 6 characters' })
-    @IsString({ message: 'Password must be a string' })
-    password!: string;
+  @ApiProperty({ example: 'P@ssw0rd' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(6)
+  @MaxLength(100)
+  password!: string;
 
-    @ApiProperty({ description: 'The username of the user', example: 'johndoe' })
-    @IsNotEmpty({ message: 'Username is required' })
-    @MaxLength(50, { message: 'Username must be at most 50 characters' })
-    @MinLength(6, { message: 'Username must be at least 6 characters' })
-    @IsString({ message: 'Username must be a string' })
-    userName!: string;
+  @ApiProperty({ example: 'NV001' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(50)
+  userName!: string;
 
-    @ApiProperty({ description: 'The role of the user', example: 'USER' })
-    @IsString({ message: 'Role name must be a string' })
-    @IsOptional({ message: 'Role name is optional if is null then default role will be user' })
-    roleName?: string;
+  @ApiPropertyOptional({ example: 'EMPLOYEE' })
+  @IsOptional()
+  @IsString()
+  roleName?: string;
 
+  // Employee profile
+  @ApiPropertyOptional({ example: 'Nguyễn Văn A' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  fullName?: string;
 
+  @ApiPropertyOptional({ example: 'NV001' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  employeeCode?: string;
+
+  @ApiPropertyOptional({ example: '0901234567' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(15)
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'UUID phòng ban' })
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string;
+
+  @ApiPropertyOptional({ description: 'UUID chức vụ' })
+  @IsOptional()
+  @IsUUID()
+  positionId?: string;
+
+  @ApiPropertyOptional({ description: 'UUID ca làm việc' })
+  @IsOptional()
+  @IsUUID()
+  shiftId?: string;
+
+  @ApiPropertyOptional({ example: '2022-01-01', description: 'Ngày bắt đầu làm việc' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
 }

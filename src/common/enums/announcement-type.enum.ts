@@ -1,0 +1,8 @@
+export enum AnnouncementType {
+  GENERAL = 'GENERAL',
+  RECRUITMENT = 'RECRUITMENT',
+  BONUS = 'BONUS',
+  REGULATION = 'REGULATION',
+  HOLIDAY = 'HOLIDAY',
+  URGENT = 'URGENT',
+}

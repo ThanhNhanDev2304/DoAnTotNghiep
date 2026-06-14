@@ -28,6 +28,13 @@ export class UsersController implements IUsersController {
     return { statusCode: 200, message: 'Users retrieved successfully', data: result };
   }
 
+  @Get('pending')
+  @ApiOperation({ summary: 'Danh sách tài khoản chờ duyệt (Admin)' })
+  async getPendingUsers() {
+    const result = await this.usersService.getPendingUsers();
+    return { statusCode: 200, message: 'Pending users retrieved', data: result };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a user by ID' })
   async findOne(@Param('id') id: string) {
@@ -91,9 +98,36 @@ export class UsersController implements IUsersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
-  // @ApiResponse({ status: 200, description: 'User deleted successfully', type: UserEntity })
   async remove(@Param('id') id: string) {
     const result = await this.usersService.remove(id);
     return { statusCode: 200, message: 'User deleted successfully', data: result };
+  }
+
+  @Patch(':id/approve-employee-code')
+  @ApiOperation({ summary: 'Admin duyệt yêu cầu cập nhật mã nhân viên' })
+  async approveEmployeeCode(@Param('id') id: string) {
+    const result = await this.usersService.approveEmployeeCode(id);
+    return { statusCode: 200, message: 'Đã duyệt mã nhân viên thành công', data: result };
+  }
+
+  @Patch(':id/reject-employee-code')
+  @ApiOperation({ summary: 'Admin từ chối yêu cầu cập nhật mã nhân viên' })
+  async rejectEmployeeCode(@Param('id') id: string) {
+    const result = await this.usersService.rejectEmployeeCode(id);
+    return { statusCode: 200, message: 'Đã từ chối yêu cầu mã nhân viên', data: result };
+  }
+
+  @Patch(':id/approve-account')
+  @ApiOperation({ summary: 'Duyệt tài khoản nhân viên (Admin)' })
+  async approveAccount(@Param('id') id: string) {
+    const result = await this.usersService.approveAccount(id);
+    return { statusCode: 200, message: 'Tài khoản đã được duyệt', data: result };
+  }
+
+  @Patch(':id/reject-account')
+  @ApiOperation({ summary: 'Từ chối tài khoản nhân viên (Admin)' })
+  async rejectAccount(@Param('id') id: string) {
+    await this.usersService.rejectAccount(id);
+    return { statusCode: 200, message: 'Tài khoản đã bị từ chối và xóa', data: null };
   }
 }

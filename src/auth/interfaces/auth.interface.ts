@@ -5,6 +5,7 @@
 
 import type { Request, Response } from 'express';
 import { IApiResponse } from '@/common/interceptors/transform.interceptor';
+import { IUserEntity } from '@/users/interfaces/users.interface';
 
 /* ------------------------------------------------------------
  1. DTO Interfaces
@@ -14,6 +15,11 @@ export interface IRegisterDto {
   userName: string;
   email: string;
   password: string;
+  fullName: string;
+  phone?: string;
+  departmentId?: string;
+  positionId?: string;
+  isIntern?: boolean;
 }
 
 export interface IVerifyRegisterOtpDto {
@@ -94,6 +100,10 @@ export interface IOtpVerifyResult {
 }
 
 export interface IRegisterResult {
+  message: string;
+}
+
+export interface IOtpResult {
   otpExpire: string;
 }
 
@@ -123,12 +133,12 @@ export interface IAuthService {
   registerWithOTP(dto: IRegisterDto): Promise<IRegisterResult>;
   verifyRegisterOtp(dto: IVerifyRegisterOtpDto): Promise<ISanitizedUser>;
   resendRegisterOtp(dto: IResendRegisterOtpDto): Promise<IRegisterResult>;
-  sendChangePasswordOtp(dto: IVerifyEmailDto): Promise<IRegisterResult>;
+  sendChangePasswordOtp(dto: IVerifyEmailDto): Promise<IOtpResult>;
   verifyChangePasswordOtp(dto: IChangePasswordVerifyDto): Promise<ISanitizedUser>;
   validateUser(userNameOrEmail: string, password: string): Promise<ILocalValidateResult | null>;
   login(user: ISanitizedUser, res: Response, deviceId: string): Promise<ILoginResult>;
   refreshToken(oldCookieRefreshToken: string, res: Response): Promise<ILoginResult>;
-  googleLogin(googleUser: IGoogleUser, res: Response, deviceId: string): Promise<ILoginResult>;
+  googleLogin(googleUser: IGoogleUser, res: Response, deviceId: string): Promise<ILoginResult | { pending: true }>;
   logout(user: ISanitizedUser, oldCookieRefreshToken: string, res: Response): Promise<boolean>;
   logoutAll(user: ISanitizedUser, res: Response): Promise<boolean>;
 }
@@ -157,12 +167,12 @@ export interface IRegisterService {
 }
 
 export interface IPasswordService {
-  sendOtp(dto: IVerifyEmailDto): Promise<IRegisterResult>;
+  sendOtp(dto: IVerifyEmailDto): Promise<IOtpResult>;
   verifyAndChange(dto: IChangePasswordVerifyDto): Promise<ISanitizedUser>;
 }
 
 export interface IGoogleService {
-  login(googleUser: IGoogleUser, res: Response, deviceId: string): Promise<ILoginResult>;
+  login(googleUser: IGoogleUser, res: Response, deviceId: string): Promise<ILoginResult | { pending: true }>;
 }
 
 /* ------------------------------------------------------------
@@ -182,12 +192,12 @@ export interface IGoogleUser {
 ------------------------------------------------------------ */
 
 export interface IAuthController {
-  register(dto: IRegisterDto): Promise<IApiResponse<{ otpExpire: string }>>;
+  register(dto: IRegisterDto): Promise<IApiResponse<null>>;
   verifyRegisterOtp(dto: IVerifyRegisterOtpDto): Promise<IApiResponse<ISanitizedUser>>;
-  resendRegisterOtp(dto: IResendRegisterOtpDto): Promise<IApiResponse<{ otpExpire: string }>>;
+  resendRegisterOtp(dto: IResendRegisterOtpDto): Promise<IApiResponse<IRegisterResult>>;
   login(res: Response, user: ISanitizedUser, dto: ILoginDto, deviceId: string): Promise<IApiResponse<ILoginResult>>;
   refreshToken(res: Response, req: Request): Promise<IApiResponse<ILoginResult>>;
-  getProfile(user: ISanitizedUser): Promise<IApiResponse<{ user: ISanitizedUser }>>;
+  getProfile(userId: string): Promise<IApiResponse<{ user: IUserEntity }>>;
   changePasswordWithOtp(dto: IVerifyEmailDto): Promise<IApiResponse<{ otpExpire: string }>>;
   verifyChangePasswordOtp(dto: IChangePasswordVerifyDto): Promise<IApiResponse<ISanitizedUser>>;
   logout(res: Response, req: Request, user: ISanitizedUser): Promise<IApiResponse<{ result: boolean }>>;

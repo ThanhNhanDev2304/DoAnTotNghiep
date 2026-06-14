@@ -4,9 +4,10 @@ import { BadRequestException, createParamDecorator, ExecutionContext } from '@ne
 import { Request } from 'express';
 
 export const User = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
+  (data: keyof UserEntity | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
-    return request.user as UserEntity;
+    const user = request.user as UserEntity;
+    return data ? user?.[data] : user;
   },
 );
 

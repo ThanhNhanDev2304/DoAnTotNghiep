@@ -12,17 +12,45 @@ import { FilesModule } from '@/files/files.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JobsModule } from '@/jobs/jobs.module';
 import { EmailModule } from '@/email/email.module';
+import { DepartmentModule } from '@/department/department.module';
+import { PositionModule } from '@/position/position.module';
+import { ShiftModule } from '@/shift/shift.module';
+import { FeedbackModule } from '@/feedback/feedback.module';
+import { SurveyModule } from '@/survey/survey.module';
+import { ProposalModule } from '@/proposal/proposal.module';
+import { ComplaintModule } from '@/complaint/complaint.module';
+import { AnnouncementModule } from '@/announcement/announcement.module';
+import { EvaluationModule } from '@/evaluation/evaluation.module';
+import { QnaModule } from '@/qna/qna.module';
+import { DashboardModule } from '@/dashboard/dashboard.module';
+import { NotificationModule } from '@/notification/notification.module';
+import { SearchModule } from '@/search/search.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ 
+    ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.development.local', '.env.development', '.env.local', '.env'], // Load environment variables from .env files in order of priority
-     }), // Load environment variables from .env file and make them globally available
-    UsersModule, PrismaModule, SessionModule, RoleModule, 
-    SeedDbModule /*Module to seed the database with initial data on application startup*/,
-    ScheduleModule.forRoot(), /* Enable scheduling capabilities for tasks like cleaning up expired sessions */
-    AuthModule, FilesModule, JobsModule, EmailModule
+      envFilePath: ['.env.development.local', '.env.development', '.env.local', '.env'],
+    }),
+    // Infrastructure
+    PrismaModule, SessionModule, FilesModule, EmailModule,
+    ScheduleModule.forRoot(),
+    // Core
+    UsersModule, RoleModule, AuthModule,
+    SeedDbModule, JobsModule,
+    // Organization
+    DepartmentModule, PositionModule, ShiftModule,
+    // UMC Features
+    FeedbackModule,
+    SurveyModule,
+    ProposalModule,
+    ComplaintModule,
+    AnnouncementModule,
+    EvaluationModule,
+    QnaModule,
+    DashboardModule,
+    NotificationModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,14 @@
+export enum ComplaintType {
+  SALARY = 'SALARY',
+  TIMEKEEPING = 'TIMEKEEPING',
+  INSURANCE = 'INSURANCE',
+  DISCIPLINE = 'DISCIPLINE',
+  OTHER = 'OTHER',
+}
+
+export enum ComplaintStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  RESOLVED = 'RESOLVED',
+  REJECTED = 'REJECTED',
+}

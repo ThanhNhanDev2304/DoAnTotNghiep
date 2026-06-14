@@ -43,11 +43,11 @@ export class AuthService implements IAuthService {
         }
     }
 
-    async registerWithOTP(registerDto: RegisterDto) {
+    async registerWithOTP(registerDto: RegisterDto): Promise<{ message: string }> {
         try {
             return this.registerService.register(registerDto);
         } catch (error: any) {
-            if (error instanceof ConflictException) {
+            if (error instanceof ConflictException || error instanceof NotFoundException || error instanceof ValidationException) {
                 throw error;
             }
             throw new InternalServerException(`Failed to register user: ${error.message}`);
@@ -114,6 +114,9 @@ export class AuthService implements IAuthService {
         const authPass = await comparePassword(password, user.password);
         if (!authPass) {
             return null;
+        }
+        if (!user.isActive) {
+            throw new ValidationException('Tài khoản của bạn đang chờ admin duyệt. Vui lòng chờ thông báo qua email.');
         }
         return user as ISanitizedUser;
     }

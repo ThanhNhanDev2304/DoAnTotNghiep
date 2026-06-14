@@ -1,4 +1,4 @@
-import { IS_ADMIN_ONLY_KEY, IS_PUBLIC_KEY } from '@/common/decorators/metadata';
+import { IS_ADMIN_ONLY_KEY, IS_PUBLIC_KEY, ROLES_KEY } from '@/common/decorators/metadata';
 import { ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -46,7 +46,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
                 throw new Error('Admin role name is not defined in environment variables');
             }
             if (user.roleName !== adminRoleName) {
-                throw new ForbiddenException('Access denied: Administrators only. Please log in with an administrator account to continue.');
+                throw new ForbiddenException('Access denied: Administrators only.');
+            }
+        }
+
+        // Check @Roles() decorator — user must have one of the allowed roles
+        const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+            context.getHandler(),
+            context.getClass(),
+        ]);
+        if (requiredRoles && requiredRoles.length > 0) {
+            if (!requiredRoles.includes(user.roleName)) {
+                throw new ForbiddenException(`Access denied: required role(s): ${requiredRoles.join(', ')}`);
             }
         }
 

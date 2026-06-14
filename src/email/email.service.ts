@@ -63,6 +63,42 @@ export class EmailService {
         this.logger.log(`OTP email sent successfully: ${info.messageId}`);
     }
 
+    async sendAccountPending(email: string, fullName: string): Promise<void> {
+        const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f5f5f7;padding:40px 16px;">
+        <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:18px;padding:40px;">
+          <h2 style="color:#1d1d1f;">Tài khoản đang chờ duyệt</h2>
+          <p>Xin chào <strong>${fullName}</strong>,</p>
+          <p>Tài khoản của bạn tại <strong>${this.appName}</strong> đã được tạo thành công và đang chờ admin xét duyệt.</p>
+          <p>Chúng tôi sẽ gửi email thông báo khi tài khoản được duyệt. Vui lòng chờ trong ít phút đến vài giờ.</p>
+          <p style="color:#86868b;font-size:13px;">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.</p>
+        </div></body></html>`;
+        await this.transporter.sendMail({ from: this.fromEmail, to: email, subject: `${this.appName} - Tài khoản đang chờ duyệt`, html });
+    }
+
+    async sendAccountApproved(email: string, fullName: string): Promise<void> {
+        const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f5f5f7;padding:40px 16px;">
+        <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:18px;padding:40px;">
+          <h2 style="color:#34c759;">Tài khoản đã được duyệt ✓</h2>
+          <p>Xin chào <strong>${fullName}</strong>,</p>
+          <p>Tài khoản của bạn tại <strong>${this.appName}</strong> đã được admin duyệt thành công.</p>
+          <p>Bạn có thể đăng nhập vào hệ thống ngay bây giờ.</p>
+          <p style="color:#86868b;font-size:13px;">Liên hệ hỗ trợ: <a href="mailto:${this.supportEmail}">${this.supportEmail}</a></p>
+        </div></body></html>`;
+        await this.transporter.sendMail({ from: this.fromEmail, to: email, subject: `${this.appName} - Tài khoản đã được duyệt`, html });
+    }
+
+    async sendAccountRejected(email: string, fullName: string, reason?: string): Promise<void> {
+        const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f5f5f7;padding:40px 16px;">
+        <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:18px;padding:40px;">
+          <h2 style="color:#ff3b30;">Tài khoản không được duyệt</h2>
+          <p>Xin chào <strong>${fullName}</strong>,</p>
+          <p>Rất tiếc, tài khoản của bạn tại <strong>${this.appName}</strong> không được admin chấp thuận.</p>
+          ${reason ? `<p><strong>Lý do:</strong> ${reason}</p>` : ''}
+          <p>Vui lòng liên hệ <a href="mailto:${this.supportEmail}">${this.supportEmail}</a> để biết thêm thông tin.</p>
+        </div></body></html>`;
+        await this.transporter.sendMail({ from: this.fromEmail, to: email, subject: `${this.appName} - Tài khoản không được duyệt`, html });
+    }
+
     async sendTestEmail(toEmail: string): Promise<void> {
         const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'test-email.ejs');
         const html = await ejs.renderFile(templatePath, {

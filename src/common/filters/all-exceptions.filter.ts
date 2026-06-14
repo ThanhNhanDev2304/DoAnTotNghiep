@@ -78,6 +78,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     /**
      * Standard Response
      */
+    if (response.headersSent) return;
+
     response.status(statusCode).json({
       statusCode,
       message,

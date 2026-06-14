@@ -1,5 +1,5 @@
 // prisma/schema.prisma
-// Define your database models
+// UMC Electronics Vietnam — Hệ thống quản lý phản hồi người lao động
 
 generator client {
   provider = "prisma-client-js"
@@ -9,49 +9,96 @@ datasource db {
   provider = "postgresql"
 }
 
-// Example models
+// ============================================================
+// CORE — Auth & User
+// ============================================================
 
 model User {
-  id    String @id @default(uuid())
-  email String @unique
-  userName  String @unique
-  googleId String? @unique
-  accountType String @default("local")
-  avatarUrl String?
+  id            String  @id @default(uuid())
+  email         String  @unique
+  userName      String  @unique
+  googleId      String? @unique
+  accountType   String  @default("local")
+  avatarUrl     String?
   backgroundUrl String?
-  description String?
-  password String?
-  roleId String
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  sessions Session[]
-  files File[]
+  description   String?
+  password      String?
+  roleId        String
+  role          Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  isActive      Boolean  @default(false)  // false = chờ admin duyệt
+
+  // Employee profile
+  employeeCode         String?  @unique
+  pendingEmployeeCode  String?           // Đang chờ admin duyệt
+  fullName             String?
+  phone                String?
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  positionId    String?
+  position      Position?   @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  shiftId       String?
+  shift         Shift?      @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  startDate     DateTime?   // Ngày bắt đầu làm việc (tính thâm niên)
+
+  // Relations
+  sessions      Session[]
+  files         File[]
+
+  feedbacks             Feedback[]          @relation("FeedbackAuthor")
+  feedbacksResolved     Feedback[]          @relation("FeedbackResolver")
+  surveyCreated         Survey[]            @relation("SurveyCreator")
+  surveyResponses       SurveyResponse[]    @relation("SurveyResponder")
+  proposals             Proposal[]          @relation("ProposalAuthor")
+  proposalsResolved     Proposal[]          @relation("ProposalResolver")
+  complaints            Complaint[]         @relation("ComplaintAuthor")
+  complaintsResolved    Complaint[]         @relation("ComplaintResolver")
+  announcements         Announcement[]      @relation("AnnouncementAuthor")
+  evaluations           WorkplaceEvaluation[]
+  qnas                  QnA[]               @relation("QnAAuthor")
+  qnaAnswers            QnAAnswer[]         @relation("QnAAnswerAuthor")
+  recognitionsGiven     Recognition[]       @relation("RecognitionGiver")
+  recognitionsReceived  Recognition[]       @relation("RecognitionReceiver")
+  notifications         Notification[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // ACCOUNT_APPROVED, SURVEY_PUBLISHED, ANNOUNCEMENT, PROPOSAL_STATUS, COMPLAINT_STATUS
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Role {
-  id    String     @id @default(uuid())
-  roleName  String  @unique
+  id          String   @id @default(uuid())
+  roleName    String   @unique
   description String?
-  users User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model File {
-  id          String   @id @default(uuid())
-  fileName    String
+  id           String   @id @default(uuid())
+  fileName     String
   originalName String
-  path        String   @unique
-  mimeType    String
-  size        Int?
-  bucket      String
-
-  userId      String?
-  user        User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  path         String   @unique
+  mimeType     String
+  size         Int?
+  bucket       String
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Session {
@@ -64,22 +111,391 @@ model Session {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@unique([userId, deviceId]) // Composite unique constraint to ensure one session per device per user
-  @@index([deviceId]) // Index for faster lookups by deviceId
+  @@unique([userId, deviceId])
+  @@index([deviceId])
 }
 
-model PendingRegistration { 
-  id           String   @id @default(uuid())
-  email        String   @unique
-  userName     String   @unique
+model PendingRegistration {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  userName     String    @unique
   passwordHash String
   otpHash      String
   otpExpiresAt DateTime
-  attemptCount Int      @default(0)
+  attemptCount Int       @default(0)
   resendAfter  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
+// ============================================================
+// ORGANIZATION — Department / Position / Shift
+// ============================================================
 
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique  // SMT, QA, HR, PE, Warehouse, Production
+  code        String   @unique  // SMT01, QA01, ...
+  description String?
+  managerId   String?           // Trưởng phòng
 
+  users           User[]
+  feedbacks       Feedback[]
+  evaluations     WorkplaceEvaluation[]
+  healthScores    DepartmentHealthScore[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Position {
+  id          String   @id @default(uuid())
+  name        String   @unique  // Công nhân, Tổ trưởng, Quản đốc, Trưởng phòng
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shift {
+  id          String   @id @default(uuid())
+  name        String   @unique  // Ca sáng, Ca chiều, Ca đêm
+  startTime   String            // "06:00"
+  endTime     String            // "14:00"
+  description String?
+  users       User[]
+  feedbacks   Feedback[]
+  evaluations WorkplaceEvaluation[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// FEEDBACK — Phản hồi người lao động
+// ============================================================
+
+// FeedbackType: SALARY | OVERTIME | ENVIRONMENT | EQUIPMENT | MANAGEMENT | COLLEAGUE | BENEFIT | TRAINING | OTHER
+// FeedbackStatus: PENDING | REVIEWING | RESOLVED | REJECTED
+model Feedback {
+  id             String   @id @default(uuid())
+  type           String   // FeedbackType
+  title          String
+  content        String
+  isAnonymous    Boolean  @default(false)
+  anonymousToken String?  @unique  // hash(userId+feedbackId+secret) — HR không thấy userId
+  status         String   @default("PENDING")
+  hrNote         String?
+
+  // AI Sentiment
+  sentiment      String?  // POSITIVE | NEGATIVE | NEUTRAL
+  sentimentScore Float?
+  aiAnalyzedAt   DateTime?
+
+  userId         String
+  user           User     @relation("FeedbackAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  shiftId        String?
+  shift          Shift?   @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+
+  attachments    FeedbackAttachment[]
+
+  resolvedById   String?
+  resolvedBy     User?    @relation("FeedbackResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt     DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([type])
+  @@index([isAnonymous])
+}
+
+model FeedbackAttachment {
+  id           String   @id @default(uuid())
+  feedbackId   String
+  feedback     Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  fileName     String
+  originalName String
+  url          String
+  mimeType     String
+  size         Int?
+  createdAt    DateTime @default(now())
+
+  @@index([feedbackId])
+}
+
+// ============================================================
+// SURVEY — Khảo sát định kỳ
+// ============================================================
+
+// SurveyStatus: DRAFT | ACTIVE | CLOSED
+// SurveyQuestionType: RATING | TEXT | SINGLE_CHOICE | MULTI_CHOICE | YES_NO
+model Survey {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("DRAFT")
+  startDate   DateTime?
+  endDate     DateTime?
+
+  createdById String
+  createdBy   User     @relation("SurveyCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  questions   SurveyQuestion[]
+  responses   SurveyResponse[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdById])
+}
+
+model SurveyQuestion {
+  id        String   @id @default(uuid())
+  surveyId  String
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  order     Int      @default(0)
+  question  String
+  type      String   // SurveyQuestionType
+  options   String[]
+  required  Boolean  @default(true)
+  answers   SurveyAnswer[]
+
+  @@index([surveyId])
+}
+
+model SurveyResponse {
+  id          String   @id @default(uuid())
+  surveyId    String
+  survey      Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation("SurveyResponder", fields: [userId], references: [id], onDelete: Cascade)
+  submittedAt DateTime @default(now())
+  answers     SurveyAnswer[]
+
+  @@unique([surveyId, userId])
+  @@index([surveyId])
+  @@index([userId])
+}
+
+model SurveyAnswer {
+  id         String         @id @default(uuid())
+  responseId String
+  response   SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String
+  question   SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer     String
+
+  @@unique([responseId, questionId])
+  @@index([responseId])
+  @@index([questionId])
+}
+
+// ============================================================
+// PROPOSAL — Kiến nghị & Đề xuất
+// ============================================================
+
+// ProposalStatus: PENDING | IN_PROGRESS | COMPLETED | REJECTED
+model Proposal {
+  id           String   @id @default(uuid())
+  title        String
+  content      String
+  status       String   @default("PENDING")
+  hrNote       String?
+
+  userId       String
+  user         User     @relation("ProposalAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  resolvedById String?
+  resolvedBy   User?    @relation("ProposalResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================================
+// COMPLAINT — Khiếu nại
+// ============================================================
+
+// ComplaintType: SALARY | TIMEKEEPING | INSURANCE | DISCIPLINE | OTHER
+// ComplaintStatus: PENDING | IN_PROGRESS | RESOLVED | REJECTED
+model Complaint {
+  id           String   @id @default(uuid())
+  title        String
+  content      String
+  type         String   // ComplaintType
+  status       String   @default("PENDING")
+  hrNote       String?
+
+  userId       String
+  user         User     @relation("ComplaintAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  resolvedById String?
+  resolvedBy   User?    @relation("ComplaintResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+}
+
+// ============================================================
+// ANNOUNCEMENT — Thông báo nội bộ
+// ============================================================
+
+// AnnouncementType: GENERAL | RECRUITMENT | BONUS | REGULATION | HOLIDAY | URGENT
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  type      String   @default("GENERAL")
+  isPinned  Boolean  @default(false)
+
+  authorId  String
+  author    User     @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([authorId])
+  @@index([isPinned])
+}
+
+// ============================================================
+// EVALUATION — Đánh giá môi trường làm việc hàng tháng
+// ============================================================
+
+model WorkplaceEvaluation {
+  id               String   @id @default(uuid())
+  month            Int      // 1-12
+  year             Int
+
+  // Điểm 1-5 cho từng tiêu chí
+  salaryScore      Float
+  managementScore  Float
+  colleagueScore   Float
+  environmentScore Float
+  benefitScore     Float
+  trainingScore    Float
+
+  // Điểm trung bình (computed khi save)
+  averageScore     Float
+
+  comment          String?
+
+  userId           String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  departmentId     String?
+  department       Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  shiftId          String?
+  shift            Shift?     @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([userId, month, year])
+  @@index([month, year])
+  @@index([userId])
+  @@index([departmentId])
+}
+
+// ============================================================
+// QnA — Hỏi đáp nội bộ
+// ============================================================
+
+// QnAStatus: PENDING | ANSWERED
+model QnA {
+  id        String    @id @default(uuid())
+  question  String
+  status    String    @default("PENDING")
+  category  String    @default("GENERAL") // POLICY | SALARY | INSURANCE | LEAVE | GENERAL
+
+  userId    String
+  user      User      @relation("QnAAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  answers   QnAAnswer[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model QnAAnswer {
+  id        String   @id @default(uuid())
+  qnaId     String
+  qna       QnA      @relation(fields: [qnaId], references: [id], onDelete: Cascade)
+  content   String
+
+  authorId  String
+  author    User     @relation("QnAAnswerAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([qnaId])
+}
+
+// ============================================================
+// RECOGNITION — Khen thưởng & Bình chọn
+// ============================================================
+
+model Recognition {
+  id          String   @id @default(uuid())
+  message     String
+  month       Int
+  year        Int
+
+  giverId     String
+  giver       User     @relation("RecognitionGiver", fields: [giverId], references: [id], onDelete: Cascade)
+
+  receiverId  String
+  receiver    User     @relation("RecognitionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([giverId, receiverId, month, year])
+  @@index([receiverId])
+  @@index([month, year])
+}
+
+// ============================================================
+// ANALYTICS — Department Health Score (cached/computed)
+// ============================================================
+
+model DepartmentHealthScore {
+  id             String     @id @default(uuid())
+  departmentId   String
+  department     Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  month          Int
+  year           Int
+  score          Float      // 0-100
+
+  feedbackScore  Float      // from sentiment
+  surveyScore    Float      // from survey responses
+  complaintRate  Float      // lower is better
+  evalScore      Float      // from workplace evaluations
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([departmentId, month, year])
+  @@index([month, year])
+}

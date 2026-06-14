@@ -1,0 +1,6 @@
+export enum FeedbackStatus {
+  PENDING = 'PENDING',
+  REVIEWING = 'REVIEWING',
+  RESOLVED = 'RESOLVED',
+  REJECTED = 'REJECTED',
+}

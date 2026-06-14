@@ -6,7 +6,7 @@ export class UserEntity implements IUserEntity {
   email!: string;
   userName!: string;
 
-  @Exclude() // Hide password from response
+  @Exclude()
   password?: string | null;
 
   googleId?: string | null;
@@ -17,8 +17,18 @@ export class UserEntity implements IUserEntity {
   description?: string | null;
 
   roleId!: string;
-
   roleName!: string;
+  isActive!: boolean;
+
+  // Employee profile
+  fullName?: string | null;
+  employeeCode?: string | null;
+  pendingEmployeeCode?: string | null;
+  phone?: string | null;
+  departmentId?: string | null;
+  positionId?: string | null;
+  shiftId?: string | null;
+  startDate?: Date | null;
 
   @Type(() => Date)
   createdAt!: Date;
@@ -26,6 +36,5 @@ export class UserEntity implements IUserEntity {
   updatedAt!: Date;
 
   @Exclude()
-  sessions?: any[]; // Add sessions property to hold user sessions
-
+  sessions?: any[];
 }

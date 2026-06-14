@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { TokenService } from '@/auth/services/token.service';
+import { UsersService } from '@/users/users.service';
 import { GoogleUser } from '@/auth/passport/google/google-user.interface';
 import { ConflictException, NotFoundException } from '@/common/exceptions/app.exception';
 import { AccountType } from '@/common/enums/account-type.enum';
@@ -16,6 +17,7 @@ export class GoogleService implements IGoogleService {
         private readonly prismaService: PrismaService,
         private readonly configService: ConfigService,
         private readonly tokenService: TokenService,
+        private readonly usersService: UsersService,
     ) {
         this.defaultRoleName = this.configService.get('NAME_ROLE_USER')!;
         if (!this.defaultRoleName) {
@@ -23,7 +25,7 @@ export class GoogleService implements IGoogleService {
         }
     }
 
-    async login(googleUser: GoogleUser, res: Response, deviceId: string) {
+    async login(googleUser: GoogleUser, res: Response, deviceId: string): Promise<{ pending: true } | Awaited<ReturnType<typeof this.tokenService.login>>> {
         let user = await this.prismaService.user.findUnique({
             where: { email: googleUser.email },
             include: { role: { select: { roleName: true } } },
@@ -36,7 +38,11 @@ export class GoogleService implements IGoogleService {
         if (!user) {
             user = await this.createGoogleUser(googleUser);
         }
-        //conver type user tu prisma thanh ISanitizedUser de truyen vao tokenService.login
+
+        if (!user.isActive) {
+            return { pending: true };
+        }
+
         const sanitizedUser = {
             ...user,
             roleName: user.role?.roleName ?? null,
@@ -49,10 +55,11 @@ export class GoogleService implements IGoogleService {
         const defaultRole = await this.prismaService.role.findUnique({
             where: { roleName: this.defaultRoleName },
         });
-        if (!defaultRole) throw new NotFoundException('Default role not found');
+        if (!defaultRole) throw new NotFoundException('Default role');
 
         const baseUsername = googleUser.email.split('@')[0];
         const username = `${baseUsername}_${Date.now()}`;
+        const employeeCode = await this.usersService.generateEmployeeCode(false);
 
         return this.prismaService.user.create({
             data: {
@@ -61,8 +68,11 @@ export class GoogleService implements IGoogleService {
                 googleId: googleUser.googleId,
                 accountType: AccountType.GOOGLE,
                 avatarUrl: googleUser.avatarUrl,
+                fullName: googleUser.firstName ? `${googleUser.firstName} ${googleUser.lastName ?? ''}`.trim() : null,
                 roleId: defaultRole.id,
                 password: null,
+                isActive: false,
+                employeeCode,
             },
             include: { role: { select: { roleName: true } } },
         });

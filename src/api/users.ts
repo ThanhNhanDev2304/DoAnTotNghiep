@@ -29,4 +29,7 @@ export const usersApi = {
     apiClient.patch(`/users/avatarorbg/${id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  getPending: () => apiClient.get('/users/pending'),
+  approveAccount: (id: string) => apiClient.patch(`/users/${id}/approve-account`),
+  rejectAccount: (id: string) => apiClient.patch(`/users/${id}/reject-account`),
 }

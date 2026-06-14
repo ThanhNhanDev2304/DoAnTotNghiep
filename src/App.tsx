@@ -5,23 +5,53 @@ import { Toaster } from 'sonner'
 import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 
-// Pages - lazy loaded for better performance
+// Auth pages
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'))
 const GoogleCallbackPage = React.lazy(() => import('./pages/auth/GoogleCallbackPage'))
 const RegisterPage = React.lazy(() => import('./pages/auth/RegisterPage'))
-const VerifyOtpPage = React.lazy(() => import('./pages/auth/VerifyOtpPage'))
+const PendingPage = React.lazy(() => import('./pages/auth/PendingPage'))
+const PendingUsersPage = React.lazy(() => import('./pages/admin/PendingUsersPage'))
+const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage'))
+
+// Common pages
 const DashboardPage = React.lazy(() => import('./pages/dashboard/DashboardPage'))
 const ProfilePage = React.lazy(() => import('./pages/profile/ProfilePage'))
 const ChangePasswordPage = React.lazy(() => import('./pages/profile/ChangePasswordPage'))
+const AnnouncementsPage = React.lazy(() => import('./pages/announcements/AnnouncementsPage'))
+const AnnouncementDetailPage = React.lazy(() => import('./pages/announcements/AnnouncementDetailPage'))
+
+// Employee pages
+const SubmitFeedbackPage = React.lazy(() => import('./pages/feedback/SubmitFeedbackPage'))
+const MyFeedbacksPage = React.lazy(() => import('./pages/feedback/MyFeedbacksPage'))
+const SurveysPage = React.lazy(() => import('./pages/survey/SurveysPage'))
+const SurveyFillPage = React.lazy(() => import('./pages/survey/SurveyFillPage'))
+const MyProposalsPage = React.lazy(() => import('./pages/proposal/MyProposalsPage'))
+const SubmitProposalPage = React.lazy(() => import('./pages/proposal/SubmitProposalPage'))
+const MyComplaintsPage = React.lazy(() => import('./pages/complaint/MyComplaintsPage'))
+const SubmitComplaintPage = React.lazy(() => import('./pages/complaint/SubmitComplaintPage'))
+const QnaPage = React.lazy(() => import('./pages/qna/QnaPage'))
+const EvaluationPage = React.lazy(() => import('./pages/evaluation/EvaluationPage'))
+
+// HR pages
+const HrFeedbacksPage = React.lazy(() => import('./pages/hr/HrFeedbacksPage'))
+const HrSurveysPage = React.lazy(() => import('./pages/hr/HrSurveysPage'))
+const HrSurveyResultsPage = React.lazy(() => import('./pages/hr/HrSurveyResultsPage'))
+const HrProposalsPage = React.lazy(() => import('./pages/hr/HrProposalsPage'))
+const HrComplaintsPage = React.lazy(() => import('./pages/hr/HrComplaintsPage'))
+const HrAnnouncementsPage = React.lazy(() => import('./pages/hr/HrAnnouncementsPage'))
+const HrQnaPage = React.lazy(() => import('./pages/hr/HrQnaPage'))
+const HrReportsPage = React.lazy(() => import('./pages/hr/HrReportsPage'))
+
+// Admin pages
 const AdminUsersPage = React.lazy(() => import('./pages/admin/AdminUsersPage'))
 const AdminRolesPage = React.lazy(() => import('./pages/admin/AdminRolesPage'))
+const AdminDepartmentsPage = React.lazy(() => import('./pages/admin/AdminDepartmentsPage'))
+const AdminPositionsPage = React.lazy(() => import('./pages/admin/AdminPositionsPage'))
+const AdminShiftsPage = React.lazy(() => import('./pages/admin/AdminShiftsPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
+    queries: { retry: 1, staleTime: 1000 * 60 * 5 },
   },
 })
 
@@ -44,20 +74,51 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/google/callback" element={<GoogleCallbackPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/register/verify-otp" element={<VerifyOtpPage />} />
+            <Route path="/register/pending" element={<PendingPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
+                {/* Common */}
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/profile/change-password" element={<ChangePasswordPage />} />
+                <Route path="/announcements" element={<AnnouncementsPage />} />
+                <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
+
+                {/* Employee */}
+                <Route path="/feedback/submit" element={<SubmitFeedbackPage />} />
+                <Route path="/feedback/my" element={<MyFeedbacksPage />} />
+                <Route path="/surveys" element={<SurveysPage />} />
+                <Route path="/surveys/:id/fill" element={<SurveyFillPage />} />
+                <Route path="/proposals" element={<MyProposalsPage />} />
+                <Route path="/proposals/submit" element={<SubmitProposalPage />} />
+                <Route path="/complaints" element={<MyComplaintsPage />} />
+                <Route path="/complaints/submit" element={<SubmitComplaintPage />} />
+                <Route path="/qna" element={<QnaPage />} />
+                <Route path="/evaluation" element={<EvaluationPage />} />
+
+                {/* HR */}
+                <Route path="/hr/feedbacks" element={<HrFeedbacksPage />} />
+                <Route path="/hr/surveys" element={<HrSurveysPage />} />
+                <Route path="/hr/surveys/:id/results" element={<HrSurveyResultsPage />} />
+                <Route path="/hr/proposals" element={<HrProposalsPage />} />
+                <Route path="/hr/complaints" element={<HrComplaintsPage />} />
+                <Route path="/hr/announcements" element={<HrAnnouncementsPage />} />
+                <Route path="/hr/qna" element={<HrQnaPage />} />
+                <Route path="/hr/reports" element={<HrReportsPage />} />
+
+                {/* Admin */}
                 <Route path="/admin/users" element={<AdminUsersPage />} />
+                <Route path="/admin/pending-users" element={<PendingUsersPage />} />
                 <Route path="/admin/roles" element={<AdminRolesPage />} />
+                <Route path="/admin/departments" element={<AdminDepartmentsPage />} />
+                <Route path="/admin/positions" element={<AdminPositionsPage />} />
+                <Route path="/admin/shifts" element={<AdminShiftsPage />} />
               </Route>
             </Route>
 
-            {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

@@ -16,6 +16,14 @@ export interface UserProfile {
   googleId?: string | null
   role?: { id: string; roleName: string }
   createdAt?: string
+  // Employee profile
+  fullName?: string | null
+  employeeCode?: string | null
+  pendingEmployeeCode?: string | null
+  phone?: string | null
+  departmentId?: string | null
+  positionId?: string | null
+  shiftId?: string | null
 }
 
 interface AuthState {

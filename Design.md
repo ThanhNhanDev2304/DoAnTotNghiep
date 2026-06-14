@@ -1,113 +1,585 @@
+---
+version: alpha
+name: Mintlify-design-analysis
+description: Mintlify presents documentation infrastructure with a dual-mode aesthetic — atmospheric sky-gradient marketing heroes (cloud illustration backdrops, soft cream-to-blue washes) paired with dense developer-grade documentation surfaces. The system uses Inter for UI prose, Geist Mono for code, and a signature Mintlify green ({colors.brand-green}) reserved for accent CTAs and active states. Black-pill primary buttons dominate marketing, white-on-dark inversions appear on dark hero bands, and a 3-column documentation layout (sidebar / prose / TOC) anchors the developer experience. Coverage spans homepage, startups program, pricing comparison, and the live tabs documentation page.
+
+colors:
+  primary: "#0a0a0a"
+  on-primary: "#ffffff"
+  brand-green: "#00d4a4"
+  brand-green-deep: "#00b48a"
+  brand-green-soft: "#7cebcb"
+  brand-tag: "#3772cf"
+  brand-warn: "#c37d0d"
+  brand-annotate: "#1ba673"
+  brand-error: "#d45656"
+  brand-cursor: "#888888"
+  hero-sky-from: "#87a8c8"
+  hero-sky-to: "#f5e9d8"
+  hero-dark-from: "#1a3d4a"
+  hero-dark-to: "#2d5a4f"
+  testimonial-orange: "#f55a3c"
+  testimonial-orange-deep: "#cc3a1f"
+  canvas: "#ffffff"
+  canvas-dark: "#0a0a0a"
+  surface: "#f7f7f7"
+  surface-soft: "#fafafa"
+  surface-code: "#1c1c1e"
+  hairline: "#e5e5e5"
+  hairline-soft: "#ededed"
+  hairline-dark: "#1f1f1f"
+  ink: "#0a0a0a"
+  charcoal: "#1c1c1e"
+  slate: "#3a3a3c"
+  steel: "#5a5a5c"
+  stone: "#888888"
+  muted: "#a8a8aa"
+  on-dark: "#ffffff"
+  on-dark-muted: "#b3b3b3"
+
+typography:
+  hero-display:
+    fontFamily: Inter
+    fontSize: 72px
+    fontWeight: 600
+    lineHeight: 1.05
+    letterSpacing: -2px
+  display-lg:
+    fontFamily: Inter
+    fontSize: 56px
+    fontWeight: 600
+    lineHeight: 1.10
+    letterSpacing: -1.5px
+  heading-1:
+    fontFamily: Inter
+    fontSize: 48px
+    fontWeight: 600
+    lineHeight: 1.10
+    letterSpacing: -1px
+  heading-2:
+    fontFamily: Inter
+    fontSize: 36px
+    fontWeight: 600
+    lineHeight: 1.20
+    letterSpacing: -0.5px
+  heading-3:
+    fontFamily: Inter
+    fontSize: 28px
+    fontWeight: 600
+    lineHeight: 1.25
+  heading-4:
+    fontFamily: Inter
+    fontSize: 22px
+    fontWeight: 600
+    lineHeight: 1.30
+  heading-5:
+    fontFamily: Inter
+    fontSize: 18px
+    fontWeight: 600
+    lineHeight: 1.40
+  subtitle:
+    fontFamily: Inter
+    fontSize: 18px
+    fontWeight: 400
+    lineHeight: 1.50
+  body-md:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.50
+  body-md-medium:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 500
+    lineHeight: 1.50
+  body-sm:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: 400
+    lineHeight: 1.50
+  body-sm-medium:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: 500
+    lineHeight: 1.50
+  caption:
+    fontFamily: Inter
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.40
+  caption-bold:
+    fontFamily: Inter
+    fontSize: 13px
+    fontWeight: 600
+    lineHeight: 1.40
+  micro:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: 500
+    lineHeight: 1.40
+  micro-uppercase:
+    fontFamily: Inter
+    fontSize: 11px
+    fontWeight: 600
+    lineHeight: 1.40
+    letterSpacing: 0.5px
+  button-md:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: 500
+    lineHeight: 1.30
+  code-md:
+    fontFamily: Geist Mono
+    fontSize: 14px
+    fontWeight: 400
+    lineHeight: 1.50
+  code-sm:
+    fontFamily: Geist Mono
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.40
+  code-inline:
+    fontFamily: Geist Mono
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 1.30
+
+rounded:
+  xs: 4px
+  sm: 6px
+  md: 8px
+  lg: 12px
+  xl: 16px
+  xxl: 24px
+  full: 9999px
+
+spacing:
+  xxs: 4px
+  xs: 8px
+  sm: 12px
+  md: 16px
+  lg: 20px
+  xl: 24px
+  xxl: 32px
+  xxxl: 40px
+  section-sm: 48px
+  section: 64px
+  section-lg: 96px
+  hero: 120px
+
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.button-md}"
+    rounded: "{rounded.full}"
+    padding: "10px 20px"
+  button-primary-pressed:
+    backgroundColor: "{colors.charcoal}"
+    textColor: "{colors.on-primary}"
+  button-primary-disabled:
+    backgroundColor: "{colors.hairline}"
+    textColor: "{colors.muted}"
+  button-accent-green:
+    backgroundColor: "{colors.brand-green}"
+    textColor: "{colors.primary}"
+    typography: "{typography.button-md}"
+    rounded: "{rounded.full}"
+    padding: "10px 20px"
+  button-on-dark:
+    backgroundColor: "{colors.on-dark}"
+    textColor: "{colors.primary}"
+    typography: "{typography.button-md}"
+    rounded: "{rounded.full}"
+    padding: "10px 20px"
+  button-secondary:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.button-md}"
+    rounded: "{rounded.full}"
+    padding: "10px 20px"
+    border: "1px solid {colors.hairline}"
+  button-ghost:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.button-md}"
+    rounded: "{rounded.md}"
+    padding: "8px 12px"
+  button-link:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm-medium}"
+    padding: "0"
+  button-icon-circular:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
+    size: 32px
+    border: "1px solid {colors.hairline}"
+  card-base:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xl}"
+    border: "1px solid {colors.hairline}"
+  card-feature:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xxl}"
+  card-help:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xl}"
+    border: "1px solid {colors.hairline}"
+  card-startup-perk:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xl}"
+    border: "1px solid {colors.hairline}"
+  pricing-card:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xxl}"
+    border: "1px solid {colors.hairline}"
+  pricing-card-featured:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xxl}"
+    border: "2px solid {colors.brand-green}"
+    shadow: "rgba(0, 212, 164, 0.08) 0px 8px 24px"
+  testimonial-card-feature:
+    backgroundColor: "{colors.testimonial-orange}"
+    textColor: "{colors.on-dark}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.section}"
+  testimonial-card-quote:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xxl}"
+    border: "1px solid {colors.hairline}"
+  text-input:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-md}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.sm} {spacing.md}"
+    border: "1px solid {colors.hairline}"
+    height: 40px
+  text-input-focused:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    border: "2px solid {colors.brand-green}"
+  search-pill:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.xs} {spacing.md}"
+    height: 36px
+    border: "1px solid {colors.hairline}"
+  segmented-tab:
+    backgroundColor: "transparent"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm-medium}"
+    padding: "{spacing.sm} {spacing.md}"
+    border: "0 0 2px transparent solid"
+  segmented-tab-active:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm-medium}"
+    border: "0 0 2px {colors.ink} solid"
+  pill-tab:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm-medium}"
+    rounded: "{rounded.full}"
+    padding: "8px 16px"
+    border: "1px solid {colors.hairline}"
+  pill-tab-active:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    rounded: "{rounded.full}"
+    border: "1px solid {colors.primary}"
+  toggle-monthly-yearly:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
+    padding: "4px"
+  badge-discount:
+    backgroundColor: "{colors.brand-green}"
+    textColor: "{colors.primary}"
+    typography: "{typography.caption-bold}"
+    rounded: "{rounded.full}"
+    padding: "2px 8px"
+  badge-required:
+    backgroundColor: "{colors.brand-error}"
+    textColor: "{colors.on-dark}"
+    typography: "{typography.micro-uppercase}"
+    rounded: "{rounded.sm}"
+    padding: "2px 6px"
+  badge-type:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.steel}"
+    typography: "{typography.code-sm}"
+    rounded: "{rounded.sm}"
+    padding: "2px 6px"
+  badge-tag:
+    backgroundColor: "rgba(55, 114, 207, 0.15)"
+    textColor: "{colors.brand-tag}"
+    typography: "{typography.caption-bold}"
+    rounded: "{rounded.sm}"
+    padding: "2px 8px"
+  promo-banner:
+    backgroundColor: "{colors.canvas-dark}"
+    textColor: "{colors.on-dark}"
+    typography: "{typography.body-sm-medium}"
+    padding: "{spacing.sm} {spacing.md}"
+  code-block:
+    backgroundColor: "{colors.surface-code}"
+    textColor: "{colors.on-dark}"
+    typography: "{typography.code-md}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.md}"
+  code-block-header:
+    backgroundColor: "{colors.surface-code}"
+    textColor: "{colors.on-dark-muted}"
+    typography: "{typography.caption}"
+    padding: "{spacing.xs} {spacing.md}"
+    border: "0 0 1px {colors.hairline-dark} solid"
+  code-inline:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.charcoal}"
+    typography: "{typography.code-inline}"
+    rounded: "{rounded.xs}"
+    padding: "2px 6px"
+    border: "1px solid {colors.hairline}"
+  property-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm}"
+    padding: "{spacing.md} 0"
+    border: "0 0 1px {colors.hairline-soft} solid"
+  feature-comparison-table:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    border: "1px solid {colors.hairline}"
+  feature-comparison-row:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    padding: "{spacing.md} {spacing.lg}"
+    border: "0 0 1px {colors.hairline-soft} solid"
+  sidebar-nav-item:
+    backgroundColor: "transparent"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.sm}"
+    padding: "{spacing.xs} {spacing.md}"
+  sidebar-nav-item-active:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm-medium}"
+  sidebar-section-header:
+    backgroundColor: "transparent"
+    textColor: "{colors.steel}"
+    typography: "{typography.micro-uppercase}"
+    padding: "{spacing.md} {spacing.md} {spacing.xs}"
+  doc-toc-item:
+    backgroundColor: "transparent"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm}"
+    padding: "{spacing.xxs} 0"
+  doc-toc-item-active:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm-medium}"
+  copy-code-button:
+    backgroundColor: "transparent"
+    textColor: "{colors.on-dark-muted}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.sm}"
+    padding: "{spacing.xxs} {spacing.xs}"
+    border: "1px solid {colors.hairline-dark}"
+  hero-band-sky:
+    backgroundColor: "{colors.hero-sky-from}"
+    textColor: "{colors.on-dark}"
+    rounded: "0"
+    padding: "{spacing.hero}"
+  hero-band-dark:
+    backgroundColor: "{colors.hero-dark-from}"
+    textColor: "{colors.on-dark}"
+    rounded: "0"
+    padding: "{spacing.hero}"
+  hero-product-mockup:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "0"
+    border: "1px solid {colors.hairline-soft}"
+    shadow: "rgba(0, 0, 0, 0.12) 0px 24px 48px -8px"
+  logo-wall-item:
+    backgroundColor: "transparent"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-md-medium}"
+    padding: "{spacing.lg}"
+  faq-accordion-item:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.xl}"
+    border: "1px solid {colors.hairline-soft}"
+  footer-region:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm}"
+    padding: "{spacing.section} {spacing.xxl}"
+    border: "1px solid {colors.hairline}"
+  footer-link:
+    backgroundColor: "transparent"
+    textColor: "{colors.steel}"
+    typography: "{typography.body-sm}"
+    padding: "{spacing.xxs} 0"
+  startup-program-card:
+    backgroundColor: "{colors.canvas}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xxl}"
+    border: "1px solid {colors.hairline}"
+  founder-quote-card:
+    backgroundColor: "{colors.testimonial-orange}"
+    textColor: "{colors.on-dark}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xxl}"
+---
+
 ## Overview
 
-Meta's commerce surfaces (homepage, Quest configurator, Ray-Ban product detail, prescription page) read as a confident hardware merchandiser. The brand voice is photography-first: large, full-bleed product imagery dominates above-the-fold real estate, with white space and tight typographic hierarchy carrying the rest. The system has a recognizable dual-CTA pattern — a black pill-shaped primary on marketing surfaces shifting to a saturated cobalt blue ({colors.primary}) inside the buy-now flows, paired with an outlined ghost button for secondary navigation.
+Mintlify positions itself at the intersection of polished marketing presentation and developer-grade documentation density. The home and startups pages open with cinematic atmospheric heroes — soft sky-gradient backdrops with cloud illustrations on the homepage, dark teal-to-mint gradients with a rocket launch on the startups page — that feel more like a SaaS landing aesthetic than a developer tool. Then the deeper surfaces (pricing comparison, live documentation pages) collapse into dense, high-information layouts where Inter body type carries 14–16px copy across long-form prose, syntax-highlighted code blocks, and 3-column documentation grids.
 
-Optimistic VF — Meta's variable display face — anchors the entire system, ranging from a 64px hero display down to a 12px caption. The face's `ss01` and `ss02` stylistic sets are switched on across every heading role, contributing to the brand's slightly humanist, friendly geometric character. Below 768px the system collapses cleanly: hero stacks, pill nav becomes a hamburger, three-up feature grids flatten to a single column, and product configurators drop their right-rail summary into a sticky bottom bar.
+The brand's signature mint green ({colors.brand-green}) appears sparingly but decisively — on the hero "Get started" pill button, the green checkmark icons inside feature lists, the "Featured" pricing tier border, and active state indicators inside docs UI. Black-pill primary buttons dominate the marketing flow; white-on-dark inversions appear on dark hero bands. The signature pairing of Inter (body, headings) with Geist Mono (code blocks, inline references, type signatures) reinforces the developer-tool DNA without requiring a third typeface.
 
 **Key Characteristics:**
-- Stark white canvas ({colors.canvas}) carrying full-bleed product photography with `{rounded.xxxl}` (32px) corner softening on showcase tiles
-- Two-tier primary button system: marketing CTAs use {colors.ink-button} pills; commerce CTAs use {colors.primary} cobalt pills inside buy-now panels
-- Optimistic VF as the universal display + body face with consistent `ss01, ss02` OpenType features
-- Pill-shaped buttons ({rounded.full}) and `{rounded.xxxl}`/`{rounded.feature}` cards as the dominant geometric signature
-- Saturated promotional banners (yellow {colors.warning}, dark {colors.ink-deep}) used sparingly above the nav for time-bound offers
-- Photographic feature cards with no card chrome (no border, no shadow) — the product imagery IS the surface treatment
+- Atmospheric gradient hero bands (sky-blue to cream on homepage; teal-to-mint on startups) provide cinematic marketing presentation
+- Signature Mintlify mint green ({colors.brand-green}) reserved for accent CTAs, active states, and feature confirmations
+- Black-pill primary buttons ({colors.primary} + `{rounded.full}`) for marketing CTAs
+- Inter for all UI prose; Geist Mono for code blocks, inline code, and type/property signatures
+- 3-column documentation layout (sidebar / prose / TOC) with dense 14px body type for long-form developer reading
+- Tightly-controlled radius scale: marketing uses `{rounded.lg}` (12px), pill buttons use `{rounded.full}` — no in-between corner softening
+- Vibrant testimonial card (`{colors.testimonial-orange}`) breaks color rhythm intentionally for emotional impact
 
 ## Colors
 
-> Source pages: meta.com/ (homepage), /ai-glasses/ray-ban-meta-skyler-gen-2/ (PDP), /quest/quest-3s/buy-now/ (configurator), /ai-glasses/prescription/ (lens upsell). Token coverage was identical across all four pages — the design system is genuinely unified.
+> Source pages: mintlify.com/ (homepage), /startups (program page), /pricing (comparison), /docs/components/tabs (live documentation). Token coverage was identical across all four pages.
 
 ### Brand & Accent
-- **Cobalt Primary** ({colors.primary}): The buy-now CTA color. Used on every "Add to cart", "Configure", "Pre-order" button inside the commerce flow and the right-rail purchase panel.
-- **Deep Cobalt** ({colors.primary-deep}): Pressed-state and dark-surface variant of the cobalt primary; also the active link color.
-- **Soft Cobalt** ({colors.primary-soft}): Translucent background tint for informational callouts (`{colors.primary-soft}` at 15% alpha).
-- **Facebook Blue** ({colors.fb-blue}): Selected radio/checkbox state and inline form-control activation color.
-- **Meta Link Blue** ({colors.meta-link}): Reserved for legacy navigation and footer link affordances.
-- **Oculus Purple** ({colors.oculus-purple}): VR product accent — used inside Quest-branded surfaces for category emphasis.
+- **Mintlify Mint** ({colors.brand-green}): Signature accent — used on hero "Get started" pill button, green checkmarks in feature lists, featured pricing tier border accent, sidebar active indicator dots.
+- **Deep Mint** ({colors.brand-green-deep}): Pressed/active variant of the mint accent.
+- **Soft Mint** ({colors.brand-green-soft}): Subtle background tint for success states and confirmation surfaces.
+- **Brand Tag** ({colors.brand-tag}): Documentation tag and reference color (used in `<Tabs>` JSX-style annotations and code-tag chips).
+- **Brand Annotate** ({colors.brand-annotate}): Inline code annotation green (used in twoslash code annotation system).
+- **Brand Warn** ({colors.brand-warn}): Code warning highlight (deprecated, caution).
+- **Brand Error** ({colors.brand-error}): Red used for required-field labels and error highlight.
+- **Testimonial Orange** ({colors.testimonial-orange}): Warm coral-orange used on the "Cursor" testimonial card and warm callout surfaces.
 
 ### Surface
-- **Canvas White** ({colors.canvas}): Page background and primary card surface.
-- **Soft Cloud** ({colors.surface-soft}): Subtle product-thumbnail and warranty-card background; also the search-pill rest state.
-- **Hairline Gray** ({colors.hairline}): 1px input border and form-control divider.
-- **Hairline Soft** ({colors.hairline-soft}): Quieter divider used on cards, footer separators, and section breaks.
+- **Canvas White** ({colors.canvas}): Primary page and card background.
+- **Canvas Dark** ({colors.canvas-dark}): Promo banner, dark inversion surfaces, code editor wrapper.
+- **Surface** ({colors.surface}): Subtle section backgrounds, search-pill rest, code-inline background, sidebar active state.
+- **Surface Soft** ({colors.surface-soft}): Quieter section backgrounds and FAQ accordion.
+- **Surface Code** ({colors.surface-code}): Dark code-block wrapper background.
+- **Hairline** ({colors.hairline}): 1px borders and primary dividers.
+- **Hairline Soft** ({colors.hairline-soft}): Quieter table-row dividers and secondary section breaks.
+
+### Hero Atmospheric
+- **Hero Sky From / To** ({colors.hero-sky-from}, {colors.hero-sky-to}): Atmospheric sky-blue to soft cream gradient on the homepage hero.
+- **Hero Dark From / To** ({colors.hero-dark-from}, {colors.hero-dark-to}): Dark teal to mint gradient on the startups hero.
 
 ### Text
-- **Deep Ink** ({colors.ink-deep}): Primary headline and body text on light surfaces.
-- **Ink** ({colors.ink}): Standard body and secondary headline text.
-- **Charcoal** ({colors.charcoal}): Tertiary body text and form-button labels.
-- **Slate** ({colors.slate}): Section-header copy and supporting microcopy.
-- **Steel** ({colors.steel}): Quieter caption text and footer link hierarchy.
-- **Stone** ({colors.stone}): Disabled or de-emphasized labels.
+- **Ink** ({colors.ink}): Primary headlines and CTA text.
+- **Charcoal** ({colors.charcoal}): Body text, code-inline foreground.
+- **Slate** ({colors.slate}): Secondary text and metadata.
+- **Steel** ({colors.steel}): Tertiary text, table headers, sidebar inactive items, footer links.
+- **Stone** ({colors.stone}): Captions, twoslash cursor color, muted labels.
+- **Muted** ({colors.muted}): De-emphasized labels and disabled text.
+- **On Dark** ({colors.on-dark}): White text on dark surfaces (hero bands, code blocks, promo banner).
+- **On Dark Muted** ({colors.on-dark-muted}): Reduced-opacity white for code-block headers and metadata on dark.
 
 ### Semantic
-- **Success** ({colors.success}): "In stock", "Free returns" affirmations.
-- **Attention** ({colors.attention}): Mid-priority alerts and timed callouts.
-- **Warning** ({colors.warning}): Promotional banners ("Get 25% off…") and limited-time tags.
-- **Critical** ({colors.critical}): Validation errors, destructive feedback.
-- **Critical Strong** ({colors.critical-strong}): Form-input error border and inline error labels.
+- Error tones derive from `{colors.brand-error}` for input borders, required-field labels, and validation messaging.
 
 ## Typography
 
 ### Font Family
-**Optimistic VF** is Meta's proprietary variable display face. Fallbacks: Montserrat, Helvetica, Arial, Noto Sans. The variable axes carry from 300 (light heading-md, used for editorial intro headlines like "Look forward") through 500 (display, hero, heading-sm) up to 700 (subtitle, body emphasis, button labels). Stylistic sets `ss01` and `ss02` are switched on across every heading role — they soften the geometry and give the type a slightly humanist breathing.
+**Inter** (primary): Variable typeface optimized for UI legibility. Used across every UI surface — body, headings, navigation, button labels, captions. Fallbacks: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif.
 
-A secondary Helvetica fallback chain is used for technical microcopy (12px) inside spec sheets and footer fine print.
+**Geist Mono** (code): Monospace typeface used inside code blocks, inline code references, type signatures (e.g. `string`, `number`, `boolean`), and property names in API documentation. Fallbacks: 'SF Mono', Menlo, Consolas, 'Geist Mono Fallback', monospace.
+
+The brand uses no italic variants of either face — emphasis comes from weight (500/600), color shift, or background highlighting (in code references).
 
 ### Hierarchy
 
-| Token | Size | Weight | Line Height | Letter Spacing | OpenType | Use |
-|---|---|---|---|---|---|---|
-| `{typography.hero-display}` | 64px | 500 | 1.16 | 0 | ss01, ss02 | Homepage hero ("Get 25% off…", category opener) |
-| `{typography.display-lg}` | 48px | 500 | 1.17 | 0 | ss01, ss02 | Section-opener display ("Made for prescriptions. Built for comfort.") |
-| `{typography.heading-lg}` | 36px | 500 | 1.28 | 0 | ss01, ss02 | Subsection headlines ("Why buy from Meta", "Tech specs") |
-| `{typography.heading-md}` | 28px | 300 | 1.21 | 0 | ss01, ss02 | Editorial subheads in lighter weight ("Look forward", "Built for prescriptions") |
-| `{typography.heading-sm}` | 24px | 500 | 1.25 | 0 | ss01, ss02 | Card titles, feature-tile headers |
-| `{typography.subtitle-lg}` | 18px | 700 | 1.44 | 0 | — | Bold callouts, FAQ question titles |
-| `{typography.subtitle-md}` | 18px | 400 | 1.44 | 0 | — | Body lead and longer-line subtitles |
-| `{typography.body-md}` | 16px | 400 | 1.50 | -0.16px | — | Primary body text |
-| `{typography.body-md-bold}` | 16px | 700 | 1.50 | -0.16px | — | Body emphasis and link-md |
-| `{typography.body-sm}` | 14px | 400 | 1.43 | -0.14px | — | Secondary body, helper text |
-| `{typography.body-sm-bold}` | 14px | 700 | 1.43 | -0.14px | — | Pill tab labels, footer headings |
-| `{typography.caption-bold}` | 12px | 700 | 1.33 | 0 | — | Badge labels, timestamps |
-| `{typography.caption}` | 12px | 400 | 1.33 | 0 | — | Footer fine print, legal microcopy |
-| `{typography.button-md}` | 14px | 700 | 1.43 | -0.14px | — | Pill button labels |
-| `{typography.link-md}` | 16px | 700 | 1.50 | -0.16px | — | Inline navigation links |
+| Token | Size | Weight | Line Height | Letter Spacing | Use |
+|---|---|---|---|---|---|
+| `{typography.hero-display}` | 72px | 600 | 1.05 | -2px | Marketing hero display ("The intelligent Knowledge Platform") |
+| `{typography.display-lg}` | 56px | 600 | 1.10 | -1.5px | Major section opener ("Built for the intelligence age") |
+| `{typography.heading-1}` | 48px | 600 | 1.10 | -1px | Page-level headlines ("Pricing on your terms") |
+| `{typography.heading-2}` | 36px | 600 | 1.20 | -0.5px | Section headlines ("Apply to the Mintlify startup program") |
+| `{typography.heading-3}` | 28px | 600 | 1.25 | 0 | Subsection headers, "Tabs" docs page title |
+| `{typography.heading-4}` | 22px | 600 | 1.30 | 0 | Card titles, larger feature headers |
+| `{typography.heading-5}` | 18px | 600 | 1.40 | 0 | Smaller feature headers, FAQ question titles |
+| `{typography.subtitle}` | 18px | 400 | 1.50 | 0 | Hero subtitle, lead body |
+| `{typography.body-md}` | 16px | 400 | 1.50 | 0 | Primary body text |
+| `{typography.body-md-medium}` | 16px | 500 | 1.50 | 0 | Body emphasis |
+| `{typography.body-sm}` | 14px | 400 | 1.50 | 0 | Secondary body, table cells, navigation |
+| `{typography.body-sm-medium}` | 14px | 500 | 1.50 | 0 | Active sidebar nav, button labels, tab labels |
+| `{typography.caption}` | 13px | 400 | 1.40 | 0 | Helper text, fine print, code-block headers |
+| `{typography.caption-bold}` | 13px | 600 | 1.40 | 0 | Badge labels |
+| `{typography.micro}` | 12px | 500 | 1.40 | 0 | Footer microcopy, label chips |
+| `{typography.micro-uppercase}` | 11px | 600 | 1.40 | 0.5px | Sidebar section headers, "REQUIRED" labels |
+| `{typography.button-md}` | 14px | 500 | 1.30 | 0 | Pill button labels |
+| `{typography.code-md}` | 14px | 400 | 1.50 | 0 | Code block content |
+| `{typography.code-sm}` | 13px | 400 | 1.40 | 0 | Smaller code, type signatures |
+| `{typography.code-inline}` | 13px | 500 | 1.30 | 0 | Inline `<Tabs>` references in body |
 
 ### Principles
-- Negative letter-spacing on body roles (`-0.14px` to `-0.16px`) tightens the type fractionally — Optimistic VF was designed for this snug-but-not-condensed setting.
-- Editorial subheads use the 300 weight to introduce visual rest between the 500-weight display headlines and the 400-weight body, creating a three-tier visual rhythm.
-- All headings carry `ss01, ss02` stylistic sets together — the design treats them as a paired alternates package, never one without the other.
-- Buttons, pill tabs, and footer headings share `{typography.body-sm-bold}` (14px / 700 / -0.14px), creating a tight visual relationship between interactive elements.
+- **Tight hero leading** (1.05) creates magazine-grade display headlines on the 72px hero
+- **Negative letter-spacing** progresses inversely with size — display sizes use -2px to -1.5px; smaller headings relax to 0
+- **Documentation-grade body** (1.50 line-height on 14–16px) ensures comfortable long-form reading in dense docs surfaces
+- **Inter / Geist Mono pairing** — Inter for everything else, Geist Mono surgically for code references; the contrast between the two is the brand's developer-respect signal
+- **Uppercase micro labels** with +0.5px letter-spacing carry sidebar section headers and "REQUIRED" annotation tags
 
 ## Layout
 
 ### Spacing System
-- **Base unit**: 4px increment with 8px as the dominant primary step.
-- **Tokens**: `{spacing.xxs}` (4px) · `{spacing.xs}` (8px) · `{spacing.sm}` (10px) · `{spacing.md}` (12px) · `{spacing.base}` (16px) · `{spacing.lg}` (20px) · `{spacing.xl}` (24px) · `{spacing.xxl}` (32px) · `{spacing.xxxl}` (40px) · `{spacing.section-sm}` (48px) · `{spacing.section}` (64px) · `{spacing.section-lg}` (80px) · `{spacing.hero}` (120px).
-- **Section rhythm**: Marketing sections separate at `{spacing.section-lg}` (80px); product detail sections compress to `{spacing.section}` (64px); FAQ stacks tighten further to `{spacing.xxl}` (32px).
-- **Card internal padding**: Standard `{spacing.xxl}` (32px); icon-feature tiles compress to `{spacing.xl}` (24px); promo-strip cards expand to `{spacing.section}` (64px) for hero presence.
+- **Base unit**: 4px (8px primary increment)
+- **Tokens**: `{spacing.xxs}` (4px) · `{spacing.xs}` (8px) · `{spacing.sm}` (12px) · `{spacing.md}` (16px) · `{spacing.lg}` (20px) · `{spacing.xl}` (24px) · `{spacing.xxl}` (32px) · `{spacing.xxxl}` (40px) · `{spacing.section-sm}` (48px) · `{spacing.section}` (64px) · `{spacing.section-lg}` (96px) · `{spacing.hero}` (120px)
+- **Section rhythm**: Marketing pages use `{spacing.section-lg}` (96px) between major bands; pricing comparison tightens to `{spacing.section}` (64px); documentation surfaces use `{spacing.xxl}` (32px) between subsections
+- **Card internal padding**: Standard `{spacing.xl}` (24px) for compact cards; `{spacing.xxl}` (32px) for pricing cards and feature panels; testimonial card pushes to `{spacing.section}` (64px) for hero-card presence
 
 ### Grid & Container
-- Marketing page max-width sits around 1280px with 32–48px gutters.
-- The PDP layout uses a 2-column split: hero gallery (~58% width) + sticky purchase rail (~42%, with `max-width: 380px` on the rail).
-- Three-up feature grids ("Why buy from Meta") use a 24px column gap; six-up product thumbnail rows (color/SKU pickers) use a 12px gap.
+- Marketing pages use a 1280px max-width with 32px gutters
+- Hero and feature bands often use 2-column splits (text left, illustration/mockup right)
+- Pricing page renders 3 tier cards in a row at desktop (FREE / Lift Off / Custom), then a comprehensive feature comparison table below
+- Documentation pages use a strict 3-column grid: left sidebar nav (~240px), center prose (~720px max-width), right TOC (~200px)
+- Logo walls use 6-up rows of customer logos at 80–100px height each
 
 ### Whitespace Philosophy
-Whitespace is product-photography-first. Hero sections give product imagery 50–70% of the viewport height; copy is given oxygen to breathe in `{spacing.xxl}` to `{spacing.xxxl}` blocks above and below. Inside the configurator, whitespace tightens — the buy-now panel is information-dense, with `{spacing.base}` to `{spacing.lg}` rhythm between option groups.
+Marketing surfaces give content generous breathing room — `{spacing.hero}` (120px) above-the-fold creates space for atmospheric gradient backdrops to read clearly. Documentation tightens dramatically: section gaps drop to `{spacing.xxl}` (32px), table rows pack to `{spacing.md}` (16px), sidebar nav compresses to `{spacing.xs}` (8px) vertical rhythm.
 
 ## Elevation & Depth
 
-The system runs predominantly flat. Elevation is reserved for two interaction layers:
+The system runs predominantly flat with strategic atmospheric depth.
 
 | Level | Treatment | Use |
 |---|---|---|
-| 0 (flat) | No shadow; `{rounded.xxxl}` rounding + `{colors.hairline-soft}` border | Default product cards, why-buy tiles |
-| 1 (subtle) | `rgba(0, 0, 0, 0.2) 1px 1px 0px 0px` | Pill-tab activation indicator |
-| 2 (sticky panel) | `rgba(20, 22, 26, 0.3) 0px 1px 4px 0px` | PDP right-rail purchase summary, sticky mobile checkout bar |
+| 0 (flat) | No shadow; `{colors.hairline}` border | Default cards, table rows, form inputs |
+| 1 (subtle) | `rgba(0, 0, 0, 0.04) 0px 1px 2px 0px` | Hover-elevated tiles, subtle highlights |
+| 2 (card) | `rgba(0, 0, 0, 0.08) 0px 4px 12px 0px` | Standard feature cards |
+| 3 (mockup) | `rgba(0, 0, 0, 0.12) 0px 24px 48px -8px` | Hero product mockup framing — the deep diffuse drop on the homepage hero docs preview |
+| 4 (brand-tinted) | `rgba(0, 212, 164, 0.08) 0px 8px 24px` | Featured pricing tier glow |
 
 ### Decorative Depth
-- Photography-as-depth: full-bleed product imagery on `{rounded.xxxl}` cards creates atmospheric layering without shadows.
-- Translucent overlays (`rgba(255, 255, 255, 0.1)` to `rgba(10, 19, 23, 0.12)`) cover dark hero photography to lift legibility of overlaid text.
-- Decorative pastel tints inside accessory cards — soft pink, ice-blue, mint — appear briefly behind product cutouts but are NOT formalized as system tokens (treated as photographic content).
+- The homepage hero uses an atmospheric photographic backdrop (cloud illustration on sky-gradient) for depth — no shadow needed; the imagery does the work
+- The startups hero uses a similar treatment with a rocket-launch illustration cutting across the dark teal gradient
+- Code blocks carry their own internal depth via syntax-highlighting color hierarchy on the dark surface; no shadow used
 
 ## Shapes
 
@@ -115,219 +587,266 @@ The system runs predominantly flat. Elevation is reserved for two interaction la
 
 | Token | Value | Use |
 |---|---|---|
-| `{rounded.xs}` | 2px | Inline checkbox marks, fine UI corners |
-| `{rounded.sm}` | 4px | Tags, micro-controls |
-| `{rounded.md}` | 6px | Square thumbnail rounding |
-| `{rounded.lg}` | 8px | Form inputs, radio-option containers |
-| `{rounded.xl}` | 16px | Standard feature cards, FAQ accordion items |
-| `{rounded.xxl}` | 24px | Warranty / accessory tiles, ghost-style action cards |
-| `{rounded.xxxl}` | 32px | Photographic feature cards, big promo strips |
-| `{rounded.feature}` | 40px | Accessory hero panels, "Built for prescriptions" cards |
-| `{rounded.full}` | 100px | Pill buttons, tab chips, badges |
-| `{rounded.circle}` | 50% | Color swatches, circular icon buttons |
+| `{rounded.xs}` | 4px | Inline code chips, micro tags |
+| `{rounded.sm}` | 6px | Sidebar nav items, type badges |
+| `{rounded.md}` | 8px | Inputs, search pill, code blocks, secondary cards |
+| `{rounded.lg}` | 12px | Standard cards, pricing tiers, hero mockup, FAQ items |
+| `{rounded.xl}` | 16px | Larger feature panels |
+| `{rounded.xxl}` | 24px | Featured product showcase tiles |
+| `{rounded.full}` | 9999px | All buttons, pill tabs, badges |
+
+The radius scale is tightly disciplined — the brand never uses a corner softening between `{rounded.md}` (8px) and `{rounded.lg}` (12px) for the same component family. Pill buttons (`{rounded.full}`) are used universally; rectangular cards use `{rounded.lg}` (12px) consistently.
 
 ### Photography Geometry
-- Product hero photography sits in `{rounded.xxxl}` (32px) frames more often than rectangles.
-- Color/material swatches are perfect circles (`{rounded.circle}`, 32px diameter, 2px white border ring when selected).
-- Square product thumbnails (`aspect-ratio: 1/1`) use `{rounded.xl}` rounding.
-- Six-up "color & SKU" picker rows use 1:1 aspect tiles with `{rounded.lg}` (8px) corners — tighter than the hero photography frames to differentiate selection-grid context from showcase context.
+- Hero illustrations (cloud, rocket) sit on full-bleed gradient backdrops with no internal framing
+- Customer logo walls use 1:1 ratio cells without rounding (logos are presented inline as wordmarks)
+- Testimonial photos use 1:1 aspect with `{rounded.md}` (8px) softening
+- Code editor mockup hero image uses `{rounded.lg}` (12px) corners on a hairline-bordered card with a deep diffuse drop shadow
 
 ## Components
 
-> Per the no-hover policy, hover states are NOT documented for any component below. Default and pressed/active states only.
+> Per the no-hover policy, hover states are NOT documented. Default and pressed/active states only.
 
 ### Buttons
 
-**`button-primary`** — Black pill primary CTA for marketing surfaces ("Shop", "Pre-order").
-- Background `{colors.ink-button}`, text `{colors.on-ink-button}`, typography `{typography.button-md}`, padding `14px 30px`, rounded `{rounded.full}`.
-- Pressed state `button-primary-pressed` flips background to `{colors.charcoal}`.
-- Disabled state `button-primary-disabled` uses `{colors.disabled-text}` background.
+**`button-primary`** — Black pill primary CTA, the dominant action across all surfaces.
+- Background `{colors.primary}`, text `{colors.on-primary}`, typography `{typography.button-md}`, padding `10px 20px`, rounded `{rounded.full}`.
+- Pressed state `button-primary-pressed` lifts to `{colors.charcoal}`.
+- Disabled state `button-primary-disabled` uses `{colors.hairline}` background and `{colors.muted}` text.
 
-**`button-buy-cta`** — Cobalt pill primary CTA for commerce flows ("Add to cart", "Configure", "Continue").
-- Background `{colors.primary}`, text `{colors.on-primary}`, typography `{typography.button-md}`, padding `14px 30px`, rounded `{rounded.full}`.
-- Pressed state `button-buy-cta-pressed` deepens background to `{colors.primary-deep}`.
-- This variant ONLY appears inside the buy-now configurator and PDP purchase rail. Marketing surfaces use `button-primary` instead.
+**`button-accent-green`** — Mint green pill for brand-emphasis CTAs (hero "Get started", featured pricing CTA).
+- Background `{colors.brand-green}`, text `{colors.primary}`, typography `{typography.button-md}`, padding `10px 20px`, rounded `{rounded.full}`.
 
-**`button-secondary`** — Outlined ghost CTA, often paired with primary in dual-CTA hero patterns.
-- Background transparent, text `{colors.ink-deep}`, border `2px solid {colors.ink-deep}`, typography `{typography.button-md}`, padding `12px 28px`, rounded `{rounded.full}`.
+**`button-on-dark`** — White pill for use on dark hero bands (startups page "Get started").
+- Background `{colors.on-dark}`, text `{colors.primary}`, typography `{typography.button-md}`, padding `10px 20px`, rounded `{rounded.full}`.
 
-**`button-ghost`** — Quieter outlined variant used for tertiary CTAs.
-- Background transparent, text `{colors.ink-deep}`, border `2px solid rgba(10, 19, 23, 0.12)`, typography `{typography.button-md}`, padding `10px 22px`, rounded `{rounded.full}`.
+**`button-secondary`** — Outlined pill for secondary actions.
+- Background transparent, text `{colors.ink}`, border `1px solid {colors.hairline}`, typography `{typography.button-md}`, padding `10px 20px`, rounded `{rounded.full}`.
 
-**`button-pill-tab`** + **`button-pill-tab-active`** — Top-of-page category navigation pills ("Glasses / Quest / Apps").
-- Inactive: background `{colors.canvas}`, text `{colors.ink}`, border `1px solid {colors.hairline}`, padding `8px 16px`, rounded `{rounded.full}`.
-- Active: background `{colors.ink-deep}`, text `{colors.canvas}`. No border in active state — the dark fill replaces it.
+**`button-ghost`** — Quieter rectangular ghost button (sidebar action, tertiary nav).
+- Background transparent, text `{colors.ink}`, typography `{typography.button-md}`, padding `8px 12px`, rounded `{rounded.md}`.
 
-**`button-icon-circular`** — 40×40px circular utility buttons (carousel arrows, share, favorite).
-- Background `{colors.canvas}`, icon color `{colors.ink}`, rounded `{rounded.circle}`.
+**`button-link`** — Inline text link styled as a subtle button.
+- Background transparent, text `{colors.ink}`, typography `{typography.body-sm-medium}`, padding `0`. Underline appears on activation.
+
+**`button-icon-circular`** — 32×32px circular utility button (close, copy, arrow).
+- Background `{colors.canvas}`, text `{colors.ink}`, border `1px solid {colors.hairline}`, rounded `{rounded.full}`.
 
 ### Cards & Containers
 
-**`card-product-feature`** — White feature card with product photography and copy (homepage "Designed for sport", "Advanced. Inside and out.").
-- Background `{colors.canvas}`, rounded `{rounded.xxxl}`, padding `{spacing.xxl}`, border `1px solid {colors.hairline-soft}`.
+**`card-base`** — Standard documentation/feature card.
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xl}`, border `1px solid {colors.hairline}`.
 
-**`card-feature-photo`** — Edge-to-edge photographic showcase tile with NO chrome (homepage "Built for prescriptions" full-bleed glasses card).
-- Background `{colors.canvas}` (visible only at the corners), rounded `{rounded.xxxl}`, no padding, no border. The image fills the card; copy is overlaid bottom-left in white.
+**`card-feature`** — Feature panel on light gray surface.
+- Background `{colors.surface}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`.
 
-**`card-promo-strip`** — Dark full-width promo card with embedded copy + CTAs (homepage "Meta Quest brings the magic of virtual reality" wide strip).
-- Background `{colors.ink-deep}`, text `{colors.canvas}`, rounded `{rounded.xxxl}`, padding `{spacing.section}`.
+**`card-help`** — "Need help?" CTA cards below the pricing comparison ("Quickstart guide", "Guide to technical writing", "Founder", "Sales").
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xl}`, border `1px solid {colors.hairline}`.
 
-**`card-icon-feature`** — Three-up feature tile with line icon, headline, and short copy ("Free 2-day delivery", "Free 30-day returns", "Worry-free warranty", "Buy now, pay later").
-- Background `{colors.canvas}`, rounded `{rounded.xl}`, padding `{spacing.xl}`, border `1px solid {colors.hairline-soft}`.
+**`card-startup-perk`** — Startup-program perk grid item ("Discounts and credits", "Priority support", "Startup pack", "Founder community").
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xl}`, border `1px solid {colors.hairline}`. Carries an icon at top, heading `{typography.heading-5}`, description `{typography.body-sm}` `{colors.steel}`.
 
-**`card-checkout-summary`** — PDP right-rail sticky summary with title, price, color picker, "Add to cart" button.
-- Background `{colors.canvas}`, rounded `{rounded.xl}`, padding `{spacing.xl}`, border `1px solid {colors.hairline-soft}`, shadow `rgba(20, 22, 26, 0.3) 0px 1px 4px 0px`.
+**`pricing-card`** — Standard pricing tier card.
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`, border `1px solid {colors.hairline}`.
+- Title `{typography.heading-3}`, price `{typography.display-lg}`, feature list `{typography.body-sm}` with green checkmark icons.
 
-**`product-thumbnail`** — Square product image cell used in color/SKU pickers and "People also bought" rows.
-- Background `{colors.surface-soft}`, rounded `{rounded.xl}`, padding `{spacing.base}`, aspect-ratio `1 / 1`.
+**`pricing-card-featured`** — Highlighted pricing tier (Lift Off / featured plan).
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`, border `2px solid {colors.brand-green}`, soft brand-tinted shadow `rgba(0, 212, 164, 0.08) 0px 8px 24px`.
 
-**`warranty-card`** — Promo callout for warranty + finance offers ("1y Warranty", "Meta Horizon+").
-- Background `{colors.surface-soft}`, rounded `{rounded.xxl}`, padding `{spacing.xxl}`. Uses pastel-tinted variants for additional perks.
+**`testimonial-card-feature`** — Bright orange large testimonial card with photo + quote ("Cursor — Every YC batch we consistently see the top performing startups use Mintlify to build their docs.").
+- Background `{colors.testimonial-orange}`, text `{colors.on-dark}`, rounded `{rounded.lg}`, padding `{spacing.section}`. Photo on right, large quote in `{typography.heading-3}` left, attribution below in `{typography.body-sm-medium}`.
 
-**`why-buy-tile`** — 4-up reassurance tile row in the lower marketing zone.
-- Background `{colors.canvas}`, rounded `{rounded.xl}`, padding `{spacing.xxl} {spacing.xl}`, border `1px solid {colors.hairline-soft}`. Heading in `{typography.subtitle-lg}`, body in `{typography.body-sm}`.
+**`testimonial-card-quote`** — Smaller white testimonial card on the startups page.
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`, border `1px solid {colors.hairline}`.
+
+**`founder-quote-card`** — Cursor founder testimonial card variant on the orange surface.
+- Background `{colors.testimonial-orange}`, text `{colors.on-dark}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`. Carries the specific founder portrait + quote treatment.
+
+**`startup-program-card`** — Larger application/program card containing perks grid + apply CTA.
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`, border `1px solid {colors.hairline}`.
 
 ### Inputs & Forms
 
-**`text-input`** — Standard form field (footer email subscribe, support form).
-- Background `{colors.canvas}`, text `{colors.ink}`, border `1px solid {colors.hairline}`, rounded `{rounded.lg}`, padding `{spacing.md}`, height 44px.
+**`text-input`** — Standard text field.
+- Background `{colors.canvas}`, text `{colors.ink}`, border `1px solid {colors.hairline}`, rounded `{rounded.md}`, padding `{spacing.sm} {spacing.md}`, height 40px.
 
 **`text-input-focused`** — Activated state.
-- Border switches to `2px solid {colors.fb-blue}`.
+- Border switches to `2px solid {colors.brand-green}` — focus uses the brand mint as the activation signal.
 
-**`text-input-error`** — Validation error state.
-- Border switches to `1px solid {colors.critical-strong}`; error label below in `{colors.critical-strong}` `{typography.body-sm}`.
+**`search-pill`** — Documentation top-bar search.
+- Background `{colors.surface}`, text `{colors.steel}`, typography `{typography.body-sm}`, rounded `{rounded.md}`, height 36px, border `1px solid {colors.hairline}`.
 
-**`search-pill`** — Top-nav search field.
-- Background `{colors.surface-soft}`, text `{colors.steel}`, typography `{typography.body-sm}`, rounded `{rounded.full}`, height 40px.
+### Tabs
 
-**`radio-option`** + **`radio-option-selected`** — Configurator option cards (storage, color variant, shipping option).
-- Inactive: background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.lg}`, border `1px solid rgba(10, 19, 23, 0.12)`.
-- Selected: border switches to `2px solid #0143b5` (deep cobalt) — the cobalt theme persists into form-control selection signaling.
+**`segmented-tab`** + **`segmented-tab-active`** — Underline-style tab navigation (used inside docs Tabs component for "First tab / Second tab / Third tab").
+- Inactive: text `{colors.steel}`, transparent background, padding `{spacing.sm} {spacing.md}`. Active: text `{colors.ink}`, 2px bottom border in `{colors.ink}`.
 
-**`color-swatch-circle`** — Round color/material picker (Ray-Ban frame finishes, glass colors).
-- 32px diameter, `{rounded.circle}`, `2px solid {colors.canvas}` ring on selection over the swatch's own fill color.
+**`pill-tab`** + **`pill-tab-active`** — Pill-style tab nav (top of pricing page: "Pricing / Roadmap").
+- Inactive: background `{colors.canvas}`, text `{colors.steel}`, border `1px solid {colors.hairline}`, padding `8px 16px`, rounded `{rounded.full}`.
+- Active: background `{colors.primary}`, text `{colors.on-primary}`, no border.
+
+**`toggle-monthly-yearly`** — Two-state pill toggle (Monthly / Annual on pricing page).
+- Background `{colors.surface}`, rounded `{rounded.full}`, padding `4px`. Active state moves a white pill thumb to the selected position.
 
 ### Badges & Status
 
-**`badge-promo-yellow`** — Limited-time offer chip ("Limited time", "Sale").
-- Background `{colors.warning}`, text `{colors.ink-deep}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `4px 10px`.
+**`badge-discount`** — Small green "Save 20%" badge attached to annual toggle.
+- Background `{colors.brand-green}`, text `{colors.primary}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `2px 8px`.
 
-**`badge-attention`** — Mid-priority status indicator ("Almost gone", "Selling fast").
-- Background `{colors.attention}`, text `{colors.canvas}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `4px 10px`.
+**`badge-required`** — Red "REQUIRED" label on documentation property rows.
+- Background `{colors.brand-error}`, text `{colors.on-dark}`, typography `{typography.micro-uppercase}`, rounded `{rounded.sm}`, padding `2px 6px`.
 
-**`badge-success`** — Affirmative status ("In stock", "Verified", "Free shipping").
-- Background `{colors.success}`, text `{colors.canvas}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `4px 10px`.
+**`badge-type`** — Type signature chip in documentation (e.g. `string`, `number`, `boolean`).
+- Background `{colors.surface}`, text `{colors.steel}`, typography `{typography.code-sm}`, rounded `{rounded.sm}`, padding `2px 6px`.
 
-**`badge-critical`** — Urgent/destructive label ("Out of stock", "Discontinued", error chips).
-- Background `{colors.critical}`, text `{colors.canvas}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `4px 10px`.
+**`badge-tag`** — Documentation tag chip (e.g. `<Tabs>` reference highlighted in body text).
+- Background `rgba(55, 114, 207, 0.15)`, text `{colors.brand-tag}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
 
-**`promo-banner`** — Sticky full-width promotional strip ABOVE the top nav ("Get 25% off the #1 selling AI glasses").
-- Background `{colors.ink-deep}` (or `{colors.warning}` for yellow promo variants), text `{colors.canvas}` (or `{colors.ink-deep}` on yellow), typography `{typography.body-sm-bold}`, padding `{spacing.md} {spacing.xl}`. Carries one-line offer copy plus an inline CTA link.
+**`promo-banner`** — Sticky black promo strip ABOVE the top nav (when present).
+- Background `{colors.canvas-dark}`, text `{colors.on-dark}`, typography `{typography.body-sm-medium}`, padding `{spacing.sm} {spacing.md}`.
+
+### Code
+
+**`code-block`** — Syntax-highlighted code container.
+- Background `{colors.surface-code}`, text `{colors.on-dark}`, typography `{typography.code-md}`, rounded `{rounded.md}`, padding `{spacing.md}`.
+
+**`code-block-header`** — Header bar above the code with language label + copy button.
+- Background `{colors.surface-code}`, text `{colors.on-dark-muted}`, typography `{typography.caption}`, padding `{spacing.xs} {spacing.md}`, bottom border `1px solid {colors.hairline-dark}`.
+
+**`code-inline`** — Inline `<Tabs>` reference in body prose.
+- Background `{colors.surface}`, text `{colors.charcoal}`, typography `{typography.code-inline}`, rounded `{rounded.xs}`, padding `2px 6px`, border `1px solid {colors.hairline}`.
+
+**`copy-code-button`** — "Copy code" button in code-block header.
+- Background transparent, text `{colors.on-dark-muted}`, typography `{typography.caption}`, rounded `{rounded.sm}`, padding `{spacing.xxs} {spacing.xs}`, border `1px solid {colors.hairline-dark}`.
+
+### Documentation Components
+
+**`property-row`** — API property documentation row (e.g. `defaultIndex` on the Tabs page).
+- Background transparent, text `{colors.ink}`, typography `{typography.body-sm}`, padding `{spacing.md} 0`, bottom border `1px solid {colors.hairline-soft}`.
+- Layout: property name in `{typography.code-inline}` + type badge + optional REQUIRED badge + description below in `{typography.body-sm}` `{colors.steel}`.
+
+**`feature-comparison-table`** — Detailed pricing-page feature comparison table.
+- Background `{colors.canvas}`, text `{colors.ink}`, typography `{typography.body-sm}`, rounded `{rounded.md}`, border `1px solid {colors.hairline}`.
+
+**`feature-comparison-row`** — Individual row inside the comparison table.
+- Background `{colors.canvas}`, text `{colors.ink}`, padding `{spacing.md} {spacing.lg}`, bottom border `1px solid {colors.hairline-soft}`. Section dividers in `{typography.micro-uppercase}` `{colors.steel}`.
+
+**`sidebar-nav-item`** + **`sidebar-nav-item-active`** — Documentation left rail link entries.
+- Inactive: background transparent, text `{colors.steel}`, typography `{typography.body-sm}`, rounded `{rounded.sm}`, padding `{spacing.xs} {spacing.md}`.
+- Active: background `{colors.surface}`, text `{colors.ink}`, typography `{typography.body-sm-medium}`.
+
+**`sidebar-section-header`** — Uppercase section header inside sidebar (e.g. "COMPONENTS", "PRIMITIVES").
+- Background transparent, text `{colors.steel}`, typography `{typography.micro-uppercase}`, padding `{spacing.md} {spacing.md} {spacing.xs}`.
+
+**`doc-toc-item`** + **`doc-toc-item-active`** — Right-rail table-of-contents links.
+- Inactive: background transparent, text `{colors.steel}`, typography `{typography.body-sm}`, padding `{spacing.xxs} 0`.
+- Active: text `{colors.ink}`, typography `{typography.body-sm-medium}`, optional left-border accent in `{colors.brand-green}`.
 
 ### Navigation
 
-**Top Navigation (Desktop)** — Sticky white bar with category pill tabs, search, account, cart.
-- Background `{colors.canvas}`, height ~64px with bottom `1px solid {colors.hairline-soft}`.
-- Left: Meta wordmark logo (61×14px). Center: pill-tab category nav. Right: search-pill + circular icon buttons (account, cart).
+**Top Navigation (Marketing)** — Sticky white bar with logo, link list, and right-side CTAs.
+- Background `{colors.canvas}`, height ~64px, bottom border `1px solid {colors.hairline-soft}`.
+- Left: Mintlify wordmark + horizontal link list (Solutions, Pricing, Customers, Documentation, Changelog).
+- Right: secondary "Talk to sales" + black-pill "Get Started".
 
-**Top Navigation (Mobile)** — Compressed to logo + hamburger + cart icon. Pill-tab nav slides into a full-screen drawer below 768px.
-
-**Promo Banner** — Full-width strip ABOVE the nav for time-bound offers.
-- Background `{colors.ink-deep}` or `{colors.warning}` (yellow), text `{colors.canvas}` or `{colors.ink-deep}`, typography `{typography.body-sm-bold}`, padding `{spacing.md} {spacing.xl}`. Carries one-line offer copy + inline link.
-
-**Breadcrumb (PDP)** — Inline path above the product hero ("Glasses › Ray-Ban Meta › Skyler (Gen 2)").
-- Typography `{typography.body-sm}`, separator dot in `{colors.stone}`, active leaf in `{colors.ink}`, parent links in `{colors.steel}`.
+**Top Navigation (Documentation)** — Compressed nav with center search-pill and right-side account/upgrade CTAs.
+- Background `{colors.canvas}`, height ~56px. Search-pill at center, "Documentation / Guides / API Reference / Changelog" links + "Talk to us" + green "Get started" right.
 
 ### Signature Components
 
-**`hero-band-marketing`** — Full-bleed photographic hero with overlaid copy + dual-CTA pair.
-- Edge-to-edge product photography on a dark or photographic background. Overlay copy in `{typography.hero-display}` white. Below the title: 1-line subtitle in `{typography.subtitle-md}` then `button-primary` + `button-secondary` pair.
+**`hero-band-sky`** — Homepage hero with atmospheric sky-blue to cream gradient and cloud illustrations.
+- Background gradient `linear-gradient(180deg, {colors.hero-sky-from} 0%, {colors.hero-sky-to} 100%)`, text `{colors.on-dark}` (early portion of gradient) shifting to `{colors.ink}` further down, padding `{spacing.hero}`.
+- Layout: centered hero headline in `{typography.hero-display}`, centered subtitle in `{typography.subtitle}`, centered button row (`button-accent-green` "Get started" + `button-secondary` "Talk to us"), product mockup below the buttons.
 
-**`product-gallery-pdp`** — Product detail page main hero: 4-up vertical thumbnail strip on the left, large product image center, sticky purchase rail right.
-- Thumbnails: 80×80px, `{rounded.lg}`, `{colors.surface-soft}` background, 1px `{colors.hairline-soft}` border (active border switches to `{colors.ink-deep}`).
-- Main image area: ~720×720px on desktop, `{rounded.xxxl}` rounding, photographic surface.
-- Sticky rail uses `card-checkout-summary`.
+**`hero-band-dark`** — Startups hero with dark teal-to-mint gradient and rocket launch illustration.
+- Background gradient `linear-gradient(135deg, {colors.hero-dark-from} 0%, {colors.hero-dark-to} 100%)`, text `{colors.on-dark}`, padding `{spacing.hero}`.
+- Layout: hero headline left in `{typography.hero-display}` `{colors.on-dark}`, illustration right (rocket cutting across the gradient), button row uses `button-on-dark` (white pill) + ghost link.
 
-**`color-sku-picker-row`** — Six-up grid of square product variants with name + price below each.
-- Tile background `{colors.surface-soft}`, rounded `{rounded.lg}`, image padded `{spacing.base}`. Active tile border switches to `2px solid {colors.ink-deep}`. Below the tile: variant name in `{typography.body-sm-bold}` and price in `{typography.body-sm}`.
+**`hero-product-mockup`** — Code-editor mockup framed inside the homepage hero.
+- Background `{colors.canvas}`, rounded `{rounded.lg}`, border `1px solid {colors.hairline-soft}`, deep shadow `rgba(0, 0, 0, 0.12) 0px 24px 48px -8px`.
+- Carries a documentation page preview inside (sidebar on left, prose body, mock UI controls).
 
-**`feature-icon-row`** — Four reassurance benefits ("Free 2-day delivery", "Free 30-day returns", "Worry-free warranty", "Buy now, pay later").
-- 4-column grid, each cell uses `card-icon-feature` chrome with a 32px line icon at top, headline `{typography.subtitle-lg}`, body `{typography.body-sm}`.
+**`logo-wall-item`** — Customer logo cell in 6-up trust-row grids ("Anthropic / Cognition / Mintlify / Vercel / react / Lovable", "Stripe / Block / PayPal / Compound / Auth").
+- Background transparent, text `{colors.steel}`, typography `{typography.body-md-medium}`, padding `{spacing.lg}`.
+- Logos rendered as wordmarks with consistent vertical centering.
 
-**`faq-accordion`** — Vertical stack of expandable Q&A items.
-- Each item uses `faq-accordion-item` chrome. Question in `{typography.subtitle-lg}` left, chevron icon (`{colors.steel}`, 20px) right. Expanded answer drops in `{typography.body-md}` text below with `{spacing.base}` top padding.
+**`faq-accordion-item`** — Frequently-asked-questions panel item (visible on pricing page).
+- Background `{colors.canvas}`, rounded `{rounded.md}`, padding `{spacing.xl}`, border `1px solid {colors.hairline-soft}`.
+- Question in `{typography.heading-5}`, expanded answer in `{typography.body-md}` `{colors.steel}`, chevron icon in `{colors.steel}` 16px.
 
-**`tech-specs-table`** — Two-column key/value table for product specifications.
-- Row layout: spec label (`{typography.body-sm-bold}` `{colors.ink}`) left, spec value (`{typography.body-sm}` `{colors.charcoal}`) right. Row separator `1px solid {colors.hairline-soft}`. Section headers in `{typography.heading-sm}` above each spec group.
+**`footer-region`** — Multi-column site footer.
+- Background `{colors.canvas}`, top border `1px solid {colors.hairline}`, padding `{spacing.section} {spacing.xxl}`.
+- 5 column groups (Explore / Resources / Company / Legal + brand mark column).
+- Section headers in `{typography.body-sm-medium}` `{colors.ink}`, link items in `{typography.body-sm}` `{colors.steel}`.
 
-**`testimonial-customer-card`** — Small editorial card with author + quote + photo.
-- Background `{colors.canvas}`, rounded `{rounded.xl}`, padding `{spacing.xxl}`, border `1px solid {colors.hairline-soft}`. Avatar circle 40px, byline in `{typography.body-sm-bold}`, quote in `{typography.body-md}`.
-
-**`footer-region`** — Dense multi-column site footer.
-- Background `{colors.canvas}`, top border `1px solid {colors.hairline-soft}`, padding `{spacing.section} {spacing.xxl}`. Six column groups with section headings in `{typography.body-sm-bold}` `{colors.ink}` and link lists in `{typography.body-sm}` `{colors.steel}`. Bottom row contains language picker, region selector, legal links in `{typography.caption}` `{colors.stone}`.
+**`footer-link`** — Individual link entry in the footer.
+- Background transparent, text `{colors.steel}`, typography `{typography.body-sm}`, padding `{spacing.xxs} 0`.
 
 ## Do's and Don'ts
 
 ### Do
-- Reserve `{colors.primary}` (cobalt) for buy-now CTAs only — its visual weight is meaningful precisely because it doesn't appear on marketing pages.
-- Use `{colors.ink-button}` (black) for marketing-surface primary CTAs. Pair with `{colors.button-secondary}` ghost outline for the secondary action.
-- Apply `{rounded.full}` to every button, every category pill, every badge, every chip — buttons are NEVER squared in Meta's system.
-- Apply `{rounded.xxxl}` to photographic product cards and `{rounded.xl}` to icon-feature tiles to maintain the visible card-hierarchy contrast.
-- Switch on `ss01, ss02` together for any Optimistic VF heading. Never one stylistic set without the other.
-- Use the 300-weight `{typography.heading-md}` for editorial subheads — it creates the brand's signature visual rhythm against the 500-weight displays.
+- Reserve `{colors.brand-green}` (Mintlify mint) for accent CTAs and active state indicators only — even one accent button per viewport carries weight
+- Use `{colors.primary}` (black) as the dominant CTA on light backgrounds; switch to `button-on-dark` (white pill) on dark hero bands
+- Apply `{rounded.full}` to every button and pill; never soften pill corners
+- Pair Inter (UI prose) with Geist Mono (code) — never introduce a third typeface
+- Use atmospheric gradient hero bands sparingly (only the homepage and startups page); keep deeper surfaces flat and dense
+- Apply `{rounded.lg}` (12px) consistently on cards; use `{rounded.md}` (8px) only on compact UI like search pills and code blocks
+- Keep documentation prose at `{typography.body-md}` (16px) with 1.50 line-height — never compress
 
 ### Don't
-- Don't use `{colors.primary}` (cobalt) for marketing-surface primary buttons — it conflicts with Meta's brand-history positioning of black-CTA-on-white-canvas marketing.
-- Don't introduce additional accent colors beyond cobalt + Oculus purple. The hardware brand is deliberately monochromatic outside its product photography.
-- Don't soften the corners of pill buttons below `{rounded.full}`. The pill is a brand signature.
-- Don't run feature cards without rounding — `{rounded.xxxl}` is the minimum for any photographic surface.
-- Don't reduce `{typography.body-md}` line-height below 1.50 — the negative letter-spacing already tightens the metric and any further compression breaks legibility.
-- Don't apply heavy shadows to marketing cards. Elevation is a commerce-flow signal, not a marketing flourish.
+- Don't use `{colors.brand-green}` on body text or large surfaces — it loses signal
+- Don't introduce additional accent colors beyond mint, tag-blue, error-red, and the testimonial orange
+- Don't apply heavy shadows on flat documentation cards; reserve elevation for the hero product mockup
+- Don't reduce documentation line-height below 1.50 — long-form readability suffers
+- Don't combine atmospheric gradients with multiple competing color accents in the same hero — the sky/dark gradient is the brand mood; let it breathe
+- Don't use Inter for code or Geist Mono for prose — the typeface assignment IS the brand voice
 
 ## Responsive Behavior
 
 ### Breakpoints
 | Name | Width | Key Changes |
 |---|---|---|
-| Mobile (small) | < 480px | Single column. Hero text drops to `{typography.display-lg}` or smaller. Pill tabs collapse into hamburger drawer. PDP gallery stacks above purchase rail; rail becomes sticky bottom bar. |
-| Mobile (large) | 480 – 767px | Same as small but feature tiles render two-up. |
-| Tablet | 768 – 1023px | Two-column feature grids. Pill-tab nav returns. PDP gallery + purchase rail render side-by-side at compressed proportions (~60/40). |
-| Desktop | 1024 – 1359px | Full three- and four-up feature grids; full pill-tab category nav; PDP at standard 58/42 split. |
-| Wide Desktop | ≥ 1360px | Same as desktop with wider hero gutters and larger product photography. |
+| Mobile (small) | < 480px | Single column. Hero scales to 36px. Pill nav collapses to hamburger. Pricing tiers stack 1-up. Footer 1-column accordion. |
+| Mobile (large) | 480 – 767px | Same as small but feature tiles render 2-up. Hero scales to 44px. |
+| Tablet | 768 – 1023px | 2-column feature grids. Pill-tab nav returns. Documentation sidebar collapses to drawer. Hero scales to 56px. |
+| Desktop | 1024 – 1279px | Full 3-column docs grid (sidebar / body / TOC). 3-tier pricing card row. Hero at 72px. |
+| Wide Desktop | ≥ 1280px | Wider hero gutters, larger product mockup, fixed 240px sidebar. |
 
 ### Touch Targets
-- Pill buttons render at 40–44px effective height (with the 14px button text + `14px 30px` padding). Above the WCAG AAA 44px floor.
-- Circular icon buttons are 40×40px — at the AA floor; bumps to 44×44px on mobile via override.
-- Color swatch circles are 32×32px. To hit AAA, the swatch carries a 12px clear hit zone around it (effective hit target ~56px).
-- Form inputs render at 44px height to align with primary button height.
+- Pill buttons render at 36–40px effective height — bumps to 44px on mobile via padding override
+- Circular icon buttons: 32×32px desktop → 44×44px mobile
+- Form inputs render at 40px height; bumps to 44px mobile
+- Sidebar nav items render at ~32px tall — bump to 44px mobile drawers
 
 ### Collapsing Strategy
-- **Promo banner** stays full-width on all breakpoints; truncates with ellipsis on small mobile, retains the inline link affordance.
-- **Pill-tab nav** below 768px collapses into a hamburger drawer; the active tab is rendered as a label inside the closed nav.
-- **PDP layout**: gallery stacks above the purchase summary at < 1024px; the summary becomes a sticky bottom bar with price + "Add to cart" button at < 768px. The full summary remains scrollable above the sticky bar.
-- **Feature grids** (3-up, 4-up) collapse to 2-up at 768–1023px and 1-up at < 768px. Card padding compresses from `{spacing.xxl}` to `{spacing.xl}` at the 1-up breakpoint.
-- **Hero typography**: `{typography.hero-display}` (64px) drops to `{typography.heading-lg}` (36px) at < 768px and `{typography.heading-sm}` (24px) at < 480px.
-- **Footer**: 6-column desktop layout reflows to 2-column at tablet and accordion-collapsed groups at mobile.
+- **Promo banner** stays full-width; truncates at < 480px
+- **Top nav** below 1024px collapses to hamburger; horizontal links move into drawer
+- **Hero band**: 2-column hero (text + mockup) collapses to stacked at < 1024px; mockup rendered below text on mobile
+- **Documentation grid**: 3-column desktop → sidebar-drawer at < 1024px → single-column at < 768px
+- **Pricing comparison**: 3-column tiers → 1-column stacked at < 768px; comparison table becomes horizontal-scroll
+- **Hero typography**: `{typography.hero-display}` (72px) → 56px tablet → 44px mobile-large → 36px mobile-small
+- **Customer logo wall**: 6-up → 3-up at tablet → 2-up at mobile
+- **Footer**: 5-column desktop → 2-column tablet → accordion at mobile
 
 ### Image Behavior
-- Product photography uses 1:1 (thumbnails, color pickers), 4:3 (PDP gallery), and 16:9 (homepage promo strips) ratios.
-- Hero photography is full-bleed with `{rounded.xxxl}` corners; lazy-loaded below the fold.
-- Product variant images preserve their `{rounded.lg}` thumbnails across all breakpoints — they never go full-width on mobile.
+- Hero illustrations (cloud, rocket) lazy-load with the hero band; remain crisp at all breakpoints (SVG-based)
+- Product mockup retains its aspect ratio across breakpoints; scales proportionally
+- Customer logos use SVG wordmarks; remain crisp on retina displays
 
 ## Iteration Guide
 
-1. Focus on ONE component at a time. The system has high internal consistency — small precision wins compound.
+1. Focus on ONE component at a time. The system has high internal consistency.
 2. Reference component names and tokens directly (`{colors.primary}`, `{component-name}-pressed`, `{rounded.full}`) — do not paraphrase.
-3. Run `npx @google/design.md lint DESIGN.md` after edits to catch broken refs, contrast issues, orphaned tokens.
-4. Add new variants as separate `components:` entries (`-pressed`, `-disabled`, `-focused`) — do not bury them inside prose.
-5. Default to `{typography.body-md}` for body and `{typography.subtitle-lg}` for emphasis. Headlines step down through `hero-display → display-lg → heading-lg → heading-md → heading-sm`.
-6. Keep `{colors.primary}` (cobalt) scarce. If it appears outside the buy-now flow on a viewport, ask whether the surface really needs to look like a checkout panel.
-7. Pill-shaped buttons (`{rounded.full}`) always; squared buttons signal "third-party widget" in this design language and should be filtered out of any work surface.
+3. Run `npx @google/design.md lint DESIGN.md` after edits to catch broken refs and contrast issues.
+4. Add new variants as separate `components:` entries (`-pressed`, `-disabled`, `-focused`, `-active`).
+5. Default to `{typography.body-md}` for body and `{typography.subtitle}` for emphasis. Headlines step down `hero-display → display-lg → heading-1 → heading-2 → heading-3 → heading-4 → heading-5`.
+6. Keep `{colors.brand-green}` confined to accent moments. If it appears on a generic surface, ask whether it earned that role.
+7. Pill-shaped buttons (`{rounded.full}`) always; squared buttons signal "third-party widget" in this language.
+8. Documentation prose belongs in `{typography.body-md}` 16px with 1.50 line-height — anything denser breaks the reading experience.
 
 ## Known Gaps
 
-- Selected/checked states for non-button form controls (toggle, multi-select) were not visible on the captured surfaces — implement following the cobalt-on-white pattern from `radio-option-selected`.
-- Animation/transition timings are not extracted; recommend 150–250ms ease-out for primary surface transitions and 300ms ease-in-out for accordion expand/collapse.
-- Specific dark-mode token values for canvas, surface, ink, and hairline are not defined; the brand has not surfaced a published dark-mode token set on these commerce pages.
-- Pastel decorative tints inside accessory cards (soft pink, ice blue, mint) appear visually but are not formalized — treat them as photographic content, not as system colors.
+- Specific dark-mode token values for canvas, surface, ink, and hairline are not surfaced on these pages; the brand has not yet shipped a published dark-mode palette
+- Animation/transition timings are not extracted; recommend 150–200ms ease for hover/focus state transitions
+- Form validation success state is not explicitly captured beyond defaults — implement following standard green-border + success badge patterns
+- Code syntax highlighting palette inside docs is not formalized; documentation samples carry their own twoslash-style annotation system tokens (e.g. `{colors.brand-tag}`, `{colors.brand-annotate}`, `{colors.brand-warn}`) but the full highlight scheme is not enumerated

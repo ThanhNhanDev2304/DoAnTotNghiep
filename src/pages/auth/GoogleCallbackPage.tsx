@@ -30,20 +30,20 @@ const GoogleCallbackPage: React.FC = () => {
 
     const dataParam = searchParams.get('data')
     if (!dataParam) {
-      toast.error('Dang nhap Google that bai. Vui long thu lai.')
+      toast.error('Đăng nhập Google thất bại. Vui lòng thử lại.')
       navigate('/login', { replace: true })
       return
     }
 
     const callbackData = decodeGoogleCallbackData(dataParam)
     if (!callbackData?.accessToken || !callbackData.user) {
-      toast.error('Du lieu dang nhap Google khong hop le.')
+      toast.error('Dữ liệu đăng nhập Google không hợp lệ.')
       navigate('/login', { replace: true })
       return
     }
 
     login(normalizeUserProfile(callbackData.user), callbackData.accessToken)
-    toast.success(`Chao mung tro lai, ${callbackData.user.userName}!`)
+    toast.success(`Chào mừng trở lại, ${callbackData.user.userName}!`)
     navigate('/dashboard', { replace: true })
   }, [login, navigate, searchParams])
 
@@ -51,7 +51,7 @@ const GoogleCallbackPage: React.FC = () => {
     <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--background))]">
       <div className="flex flex-col items-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent" />
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">Dang xu ly dang nhap Google...</p>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">Đang xử lý đăng nhập Google...</p>
       </div>
     </div>
   )

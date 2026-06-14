@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import OtpInput from '@/components/shared/OtpInput'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
+import { getApiErrorMessage } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const RESEND_COOLDOWN = 60
@@ -38,9 +39,8 @@ const VerifyOtpPage: React.FC = () => {
       await authApi.verifyRegisterOtp({ email: pendingEmail!, otp: otp.replace(/\s/g, '') })
       toast.success('Xác minh thành công! Tài khoản đã được kích hoạt.')
       navigate('/login')
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } }
-      toast.error(error?.response?.data?.message || 'OTP không hợp lệ hoặc đã hết hạn.')
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'OTP không hợp lệ hoặc đã hết hạn.'))
     } finally {
       setLoading(false)
     }
@@ -54,9 +54,8 @@ const VerifyOtpPage: React.FC = () => {
       setCountdown(RESEND_COOLDOWN)
       setOtp('')
       toast.success('Mã OTP mới đã được gửi đến email của bạn.')
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } }
-      toast.error(error?.response?.data?.message || 'Không thể gửi lại OTP.')
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Không thể gửi lại OTP.'))
     } finally {
       setResending(false)
     }

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import OtpInput from '@/components/shared/OtpInput'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
+import { getApiErrorMessage } from '@/lib/utils'
 import { toast } from 'sonner'
 
 type Step = 1 | 2
@@ -49,9 +50,8 @@ const ChangePasswordPage: React.FC = () => {
       setPending(data.email)
       toast.success('Mã OTP đã được gửi đến email!')
       setStep(2)
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } }
-      toast.error(error?.response?.data?.message || 'Không thể gửi OTP.')
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Không thể gửi OTP.'))
     }
   }
 
@@ -60,9 +60,8 @@ const ChangePasswordPage: React.FC = () => {
       await authApi.verifyChangePasswordOtp({ email: pendingEmail, otp, newPassword: data.newPassword })
       toast.success('Đổi mật khẩu thành công!')
       navigate('/profile')
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } }
-      toast.error(error?.response?.data?.message || 'OTP không hợp lệ.')
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'OTP không hợp lệ hoặc đã hết hạn.'))
     }
   }
 

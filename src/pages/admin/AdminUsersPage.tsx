@@ -174,6 +174,9 @@ const AdminUsersPage: React.FC = () => {
                     <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{u.fullName || u.userName}</p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
                   </div>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)] shrink-0">
+                    {u.role?.roleName || 'EMPLOYEE'}
+                  </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => { setRoleUser(u); roleForm.setValue('roleNameOrId', u.role?.roleName || '') }}

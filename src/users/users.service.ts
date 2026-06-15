@@ -222,8 +222,6 @@ export class UsersService implements IUsersService {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
       throw new ForbiddenException('Không được phép xóa tài khoản người dùng');
-      await this.prisma.user.delete({ where: { id } });
-      return toUserEntity(user);
     } catch (error: any) {
       if (error instanceof ForbiddenException || error instanceof NotFoundException) throw error;
       throw new InternalServerException(error.message);

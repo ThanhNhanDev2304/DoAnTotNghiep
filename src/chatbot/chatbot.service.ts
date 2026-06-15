@@ -30,7 +30,7 @@ export class ChatbotService {
       });
 
       // RAG: lấy Q&A đã được HR trả lời
-      const qnaList = await this.prisma.qna.findMany({
+      const qnaList = await this.prisma.qnA.findMany({
         where: { answer: { not: null } },
         orderBy: { createdAt: 'desc' },
         take: 20,

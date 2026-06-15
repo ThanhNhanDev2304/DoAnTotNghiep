@@ -221,13 +221,7 @@ export class UsersService implements IUsersService {
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
-      const roleUpper = user.role?.roleName?.toUpperCase();
-      if (roleUpper === 'ADMIN') {
-        throw new ForbiddenException('Không thể xóa tài khoản Admin');
-      }
-      if (roleUpper === 'EMPLOYEE') {
-        throw new ForbiddenException('Không thể xóa tài khoản người dùng');
-      }
+      throw new ForbiddenException('Không được phép xóa tài khoản người dùng');
       await this.prisma.user.delete({ where: { id } });
       return toUserEntity(user);
     } catch (error: any) {

@@ -181,13 +181,13 @@ const AdminUsersPage: React.FC = () => {
                       {u.fullName || u.userName}
                       {u.fullName && <span className="text-[hsl(var(--muted-foreground))] font-normal ml-1">({u.userName})</span>}
                     </p>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
-                      {u.email}
-                      {u.positionId && positionMap[u.positionId] && (
-                        <span className="ml-2 text-[hsl(var(--primary))]">· {positionMap[u.positionId]}</span>
-                      )}
-                    </p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
                   </div>
+                  {u.positionId && positionMap[u.positionId] && (
+                    <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-medium">
+                      {positionMap[u.positionId]}
+                    </span>
+                  )}
                   <Badge variant={u.role?.roleName === 'ADMIN' ? 'warning' : 'default'} className="shrink-0">
                     {u.role?.roleName || 'USER'}
                   </Badge>

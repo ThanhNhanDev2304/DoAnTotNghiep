@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
 import { AlertTriangle, User } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -35,6 +35,7 @@ const ProfileCompleteGuard: React.FC = () => (
 const AppLayout: React.FC = () => {
   const { user } = useAuthStore()
   const location = useLocation()
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const roleName = getUserRoleName(user)
   const isEmployee = roleName === 'EMPLOYEE'
@@ -55,8 +56,11 @@ const AppLayout: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col" style={{ marginLeft: 'var(--sidebar-width)' }}>
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(v => !v)} />
+      <div
+        className="flex-1 flex flex-col transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? '64px' : 'var(--sidebar-width)' }}
+      >
         <Header />
         <main className="flex-1 p-6 animate-fade-in">
           {isProfileIncomplete && !isOnProfilePage ? <ProfileCompleteGuard /> : <Outlet />}

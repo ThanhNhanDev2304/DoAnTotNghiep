@@ -317,7 +317,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="h-16 flex items-center justify-between px-6 border-b border-[hsl(var(--border))] bg-white/90 backdrop-blur-md sticky top-0 z-20 shadow-sm">
+      <header className="h-16 flex items-center justify-between px-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))] backdrop-blur-md sticky top-0 z-20 shadow-sm">
         <div>
           <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">{title}</h1>
           <p className="text-xs text-[hsl(var(--muted-foreground))]">

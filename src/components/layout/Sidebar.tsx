@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Shield, User, LogOut,
   MessageSquare, ClipboardList, Megaphone, Star, HelpCircle,
   Building2, Briefcase, Clock, BarChart3, FileText, AlertTriangle,
-  UserCheck, Send,
+  UserCheck, Send, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react'
 import { cn, getInitials, getApiErrorMessage } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
@@ -55,20 +55,23 @@ const adminItems: NavItem[] = [
   { to: '/admin/roles', icon: Shield, label: 'Phân quyền' },
 ]
 
-interface NavSectionProps { title: string; items: NavItem[] }
+interface NavSectionProps { title: string; items: NavItem[]; collapsed: boolean }
 
-const NavSection: React.FC<NavSectionProps> = ({ title, items }) => (
+const NavSection: React.FC<NavSectionProps> = ({ title, items, collapsed }) => (
   <div className="mb-1">
-    <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-widest px-3 mt-5 mb-1.5">
-      {title}
-    </p>
+    {collapsed
+      ? <div className="mt-4 mb-1 mx-2 h-px bg-[hsl(var(--border))]" />
+      : <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-widest px-3 mt-5 mb-1.5">{title}</p>
+    }
     {items.map(({ to, icon: Icon, label }) => (
       <NavLink
         key={to}
         to={to}
+        title={collapsed ? label : undefined}
         className={({ isActive }) =>
           cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group',
+            'flex items-center rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group',
+            collapsed ? 'justify-center p-2 mx-1 mb-0.5' : 'gap-3 px-3 py-2',
             isActive
               ? 'bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] font-semibold'
               : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))]'
@@ -78,14 +81,15 @@ const NavSection: React.FC<NavSectionProps> = ({ title, items }) => (
         {({ isActive }) => (
           <>
             <span className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-md transition-all duration-200 flex-shrink-0',
+              'flex items-center justify-center rounded-md transition-all duration-200 shrink-0',
+              collapsed ? 'h-8 w-8' : 'h-7 w-7',
               isActive
                 ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                 : 'bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary)/0.1)] group-hover:text-[hsl(var(--primary))]'
             )}>
               <Icon className="h-3.5 w-3.5" />
             </span>
-            <span className="flex-1 truncate text-[13px]">{label}</span>
+            {!collapsed && <span className="flex-1 truncate text-[13px]">{label}</span>}
           </>
         )}
       </NavLink>
@@ -93,7 +97,12 @@ const NavSection: React.FC<NavSectionProps> = ({ title, items }) => (
   </div>
 )
 
-const Sidebar: React.FC = () => {
+export interface SidebarProps {
+  collapsed: boolean
+  onToggle: () => void
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [sendOpen, setSendOpen] = useState(false)
@@ -129,63 +138,116 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 h-screen w-[var(--sidebar-width)] flex flex-col bg-white border-r border-[hsl(var(--border))] z-30 sidebar-transition">
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[hsl(var(--border))]">
-          <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm flex-shrink-0">
+      <aside className={cn(
+        'fixed left-0 top-0 h-screen flex flex-col bg-[hsl(var(--card))] border-r border-[hsl(var(--border))] z-30 transition-all duration-300 overflow-hidden',
+        collapsed ? 'w-16' : 'w-(--sidebar-width)'
+      )}>
+        {/* Logo + collapse button */}
+        <div className={cn(
+          'flex items-center border-b border-[hsl(var(--border))] shrink-0',
+          collapsed ? 'flex-col gap-2 px-2 py-3' : 'gap-3 px-4 py-4'
+        )}>
+          <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm shrink-0">
             <span className="text-white font-bold text-sm tracking-tight">UMC</span>
           </div>
-          <div className="min-w-0">
-            <p className="font-bold text-[hsl(var(--foreground))] text-sm leading-tight truncate">UMC Electronics</p>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate font-medium">Phản hồi người lao động</p>
-          </div>
+
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-[hsl(var(--foreground))] text-sm leading-tight truncate">UMC Electronics</p>
+              <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate font-medium">Phản hồi người lao động</p>
+            </div>
+          )}
+
+          <button
+            onClick={onToggle}
+            className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors shrink-0 cursor-pointer"
+            title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          >
+            {collapsed
+              ? <PanelLeftOpen className="h-4 w-4" />
+              : <PanelLeftClose className="h-4 w-4" />
+            }
+          </button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-2 py-3">
-          <NavSection title="Menu chính" items={commonItems} />
-          {(isEmployee || isAdmin) && <NavSection title="Người lao động" items={employeeItems} />}
-          {(isHR || isAdmin) && <NavSection title="Nhân sự (HR)" items={hrItems} />}
-          {isAdmin && <NavSection title="Quản trị hệ thống" items={adminItems} />}
+          <NavSection title="Menu chính" items={commonItems} collapsed={collapsed} />
+          {(isEmployee || isAdmin) && <NavSection title="Người lao động" items={employeeItems} collapsed={collapsed} />}
+          {(isHR || isAdmin) && <NavSection title="Nhân sự (HR)" items={hrItems} collapsed={collapsed} />}
+          {isAdmin && <NavSection title="Quản trị hệ thống" items={adminItems} collapsed={collapsed} />}
         </nav>
 
         {/* Send to HR — employee only */}
-        {isEmployee && (
-          <div className="px-3 pb-2">
+        {isEmployee && !collapsed && (
+          <div className="px-3 pb-2 shrink-0">
             <button
               onClick={() => setSendOpen(true)}
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] transition-all duration-200 border border-dashed border-[hsl(var(--primary)/0.3)] cursor-pointer"
             >
-              <Send className="h-3.5 w-3.5 flex-shrink-0" />
+              <Send className="h-3.5 w-3.5 shrink-0" />
               <span className="flex-1 text-left">Gửi thông báo cho HR</span>
             </button>
           </div>
         )}
 
-        {/* User footer */}
-        <div className="p-3 border-t border-[hsl(var(--border))]">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[hsl(var(--secondary))]">
-            <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarImage src={user?.avatar} />
-              <AvatarFallback className="text-xs bg-[hsl(var(--primary))] text-white font-bold">
-                {getInitials(user?.userName || 'U')}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-[hsl(var(--foreground))] truncate leading-tight">
-                {user?.fullName || user?.userName}
-              </p>
-              <p className="text-[11px] text-[hsl(var(--primary))] truncate font-medium">{role}</p>
-            </div>
+        {/* Send to HR — collapsed icon only */}
+        {isEmployee && collapsed && (
+          <div className="px-2 pb-2 shrink-0">
             <button
-              onClick={handleLogout}
-              className="text-[hsl(var(--muted-foreground))] hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
-              title="Đăng xuất"
-              aria-label="Đăng xuất"
+              onClick={() => setSendOpen(true)}
+              title="Gửi thông báo cho HR"
+              className="w-full flex justify-center p-2 rounded-lg text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] transition-all duration-200 border border-dashed border-[hsl(var(--primary)/0.3)] cursor-pointer"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <Send className="h-4 w-4" />
             </button>
           </div>
+        )}
+
+        {/* User footer */}
+        <div className={cn('border-t border-[hsl(var(--border))] shrink-0', collapsed ? 'p-2' : 'p-3')}>
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <Avatar className="h-8 w-8 shrink-0" title={user?.fullName || user?.userName}>
+                <AvatarImage src={user?.avatar} />
+                <AvatarFallback className="text-xs bg-[hsl(var(--primary))] text-white font-bold">
+                  {getInitials(user?.userName || 'U')}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={handleLogout}
+                className="text-[hsl(var(--muted-foreground))] hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-500/10 cursor-pointer"
+                title="Đăng xuất"
+                aria-label="Đăng xuất"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[hsl(var(--secondary))]">
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={user?.avatar} />
+                <AvatarFallback className="text-xs bg-[hsl(var(--primary))] text-white font-bold">
+                  {getInitials(user?.userName || 'U')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[hsl(var(--foreground))] truncate leading-tight">
+                  {user?.fullName || user?.userName}
+                </p>
+                <p className="text-[11px] text-[hsl(var(--primary))] truncate font-medium">{role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-[hsl(var(--muted-foreground))] hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-500/10 cursor-pointer"
+                title="Đăng xuất"
+                aria-label="Đăng xuất"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 

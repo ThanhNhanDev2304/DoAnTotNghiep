@@ -17,6 +17,7 @@ import {
 import { usersApi, type CreateUserPayload } from '@/api/users'
 import { rolesApi } from '@/api/roles'
 import { getInitials } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
 import { toast } from 'sonner'
 
 const createSchema = z.object({
@@ -47,6 +48,7 @@ interface UserItem {
 }
 
 const AdminUsersPage: React.FC = () => {
+  const { user: currentUser } = useAuthStore()
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
@@ -195,11 +197,13 @@ const AdminUsersPage: React.FC = () => {
                       className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors"
                       title="Chỉnh sửa"
                     ><Pencil className="h-3.5 w-3.5" /></button>
-                    <button
-                      onClick={() => setDeleteUser(u)}
-                      className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
-                      title="Xóa"
-                    ><Trash2 className="h-3.5 w-3.5" /></button>
+                    {u.id !== currentUser?.id && u.role?.roleName?.toUpperCase() !== 'ADMIN' && (
+                      <button
+                        onClick={() => setDeleteUser(u)}
+                        className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+                        title="Xóa"
+                      ><Trash2 className="h-3.5 w-3.5" /></button>
+                    )}
                   </div>
                 </div>
               ))}

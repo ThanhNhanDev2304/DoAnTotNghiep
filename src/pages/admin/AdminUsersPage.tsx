@@ -42,6 +42,8 @@ interface UserItem {
   fullName?: string
   avatar?: string
   description?: string
+  roleName?: string
+  roleId?: string
   role?: { id: string; roleName: string }
   createdAt?: string
 }
@@ -175,11 +177,11 @@ const AdminUsersPage: React.FC = () => {
                     <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
                   </div>
                   <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)] shrink-0">
-                    {u.role?.roleName || 'EMPLOYEE'}
+                    {u.roleName || u.role?.roleName || 'EMPLOYEE'}
                   </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => { setRoleUser(u); roleForm.setValue('roleNameOrId', u.role?.roleName || '') }}
+                      onClick={() => { setRoleUser(u); roleForm.setValue('roleNameOrId', u.roleName || u.role?.roleName || '') }}
                       className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-purple-400 hover:bg-purple-400/10 transition-colors"
                       title="Đổi Role"
                     ><Shield className="h-3.5 w-3.5" /></button>

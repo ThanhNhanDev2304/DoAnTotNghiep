@@ -31,10 +31,14 @@ export class ChatbotService {
 
       // RAG: lấy Q&A đã được HR trả lời
       const qnaList = await this.prisma.qnA.findMany({
-        where: { answer: { not: null } },
+        where: { status: 'ANSWERED', answers: { some: {} } },
         orderBy: { createdAt: 'desc' },
         take: 20,
-        select: { question: true, answer: true, category: true },
+        select: {
+          question: true,
+          category: true,
+          answers: { select: { content: true }, orderBy: { createdAt: 'asc' }, take: 1 },
+        },
       });
 
       const announcementCtx = announcements.length
@@ -42,7 +46,7 @@ export class ChatbotService {
         : 'Chưa có thông báo nào.';
 
       const qnaCtx = qnaList.length
-        ? qnaList.map((q) => `Hỏi: ${q.question}\nĐáp: ${q.answer}`).join('\n---\n')
+        ? qnaList.map((q) => `Hỏi: ${q.question}\nĐáp: ${q.answers[0]?.content ?? ''}`).join('\n---\n')
         : 'Chưa có hỏi đáp nào.';
 
       const systemPrompt = `Bạn là trợ lý HR thông minh của UMC Electronics Vietnam, tên là "UMC AI". Nhiệm vụ: hỗ trợ nhân viên giải đáp thắc mắc về chính sách, quy định, thông báo nội bộ và các vấn đề nhân sự.

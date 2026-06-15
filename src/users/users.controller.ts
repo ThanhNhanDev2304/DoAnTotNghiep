@@ -100,8 +100,8 @@ export class UsersController implements IUsersController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
   async remove(@Param('id') id: string, @User('id') currentUserId: string) {
-    const result = await this.usersService.remove(id, currentUserId);
-    return { statusCode: 200, message: 'User deleted successfully', data: result };
+    await this.usersService.remove(id, currentUserId);
+    return { statusCode: 200, message: 'User deleted successfully', data: null };
   }
 
   @Patch(':id/approve-employee-code')

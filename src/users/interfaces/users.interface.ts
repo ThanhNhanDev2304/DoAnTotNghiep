@@ -35,7 +35,7 @@ export interface IUsersController {
   update(id: string, dto: any): Promise<IApiResponse<IUserEntity>>;
   updateRole(id: string, dto: any): Promise<IApiResponse<IUserEntity>>;
   updateAvatarOrBG(id: string, file: Express.Multer.File, dto: any): Promise<IApiResponse<IUserEntity>>;
-  remove(id: string, currentUserId: string): Promise<IApiResponse<IUserEntity>>;
+  remove(id: string, currentUserId: string): Promise<IApiResponse<null>>;
 }
 
 export interface IUsersService {
@@ -54,5 +54,5 @@ export interface IUsersService {
   approveAccount(userId: string): Promise<IUserEntity>;
   rejectAccount(userId: string): Promise<void>;
   updateAvatarOrBG(id: string, file: Express.Multer.File, dto: any): Promise<IUserEntity>;
-  remove(id: string, currentUserId: string): Promise<IUserEntity>;
+  remove(id: string, currentUserId: string): Promise<void>;
 }

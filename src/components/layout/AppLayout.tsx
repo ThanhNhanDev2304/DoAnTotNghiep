@@ -4,6 +4,7 @@ import { AlertTriangle, User } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/authStore'
 import { getUserRoleName } from '@/lib/userProfile'
@@ -66,6 +67,7 @@ const AppLayout: React.FC = () => {
           {isProfileIncomplete && !isOnProfilePage ? <ProfileCompleteGuard /> : <Outlet />}
         </main>
       </div>
+      <ChatbotWidget />
     </div>
   )
 }

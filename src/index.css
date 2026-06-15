@@ -38,6 +38,37 @@
     --sidebar-width: 260px;
   }
 
+  /* === DARK MODE VARIABLES === */
+  .dark {
+    --background: 240 10% 8%;
+    --foreground: 0 0% 94%;
+
+    --card: 240 10% 11%;
+    --card-foreground: 0 0% 94%;
+
+    --popover: 240 10% 11%;
+    --popover-foreground: 0 0% 94%;
+
+    --primary: 263 80% 68%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 10% 16%;
+    --secondary-foreground: 0 0% 80%;
+
+    --muted: 240 10% 16%;
+    --muted-foreground: 240 5% 55%;
+
+    --accent: 25 90% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 80% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 263 80% 68%;
+  }
+
   * {
     border-color: hsl(var(--border));
     box-sizing: border-box;
@@ -194,6 +225,12 @@
 .otp-input:not(:placeholder-shown) {
   border-color: hsl(var(--primary));
   background: hsl(270 50% 97%);
+}
+
+/* === DARK MODE OVERRIDES === */
+.dark .glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* === FOCUS STATES (Accessibility) === */

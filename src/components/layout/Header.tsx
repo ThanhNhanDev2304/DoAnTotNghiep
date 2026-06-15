@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Search, X, Check, CheckCheck, Megaphone, ClipboardList, MessageSquare, FileText, AlertCircle, Send } from 'lucide-react'
+import { Bell, Search, X, Check, CheckCheck, Megaphone, ClipboardList, MessageSquare, FileText, AlertCircle, Send, Sun, Moon } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -9,6 +9,7 @@ import { notificationsApi, type Notification } from '@/api/notifications'
 import { searchApi, type SearchResults } from '@/api/search'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -275,6 +276,7 @@ const Header: React.FC = () => {
   const { user } = useAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
+  const { theme, toggle } = useTheme()
   const title = routeTitles[location.pathname] || 'Tổng quan'
 
   const [showNotif, setShowNotif] = useState(false)
@@ -332,6 +334,16 @@ const Header: React.FC = () => {
             <Search className="h-4 w-4" />
             <span className="hidden md:inline text-xs">Tìm kiếm...</span>
             <kbd className="hidden lg:inline text-xs border border-border/60 rounded px-1 py-0.5 ml-1">Ctrl K</kbd>
+          </button>
+
+          {/* Dark/Light toggle */}
+          <button
+            onClick={toggle}
+            className="p-2 rounded-lg bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
+            title={theme === 'dark' ? 'Chuyển sang Light mode' : 'Chuyển sang Dark mode'}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
           {/* Notification */}

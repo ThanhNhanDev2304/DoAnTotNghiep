@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle2, UserPlus, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { authApi } from '@/api/auth'
 import { positionsApi } from '@/api/positions'
 import { getApiErrorMessage } from '@/lib/utils'
@@ -63,118 +62,209 @@ const RegisterPage: React.FC = () => {
     }
   }
 
+  // Success state
   if (done) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] px-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-10 pb-8 space-y-4">
-            <CheckCircle2 className="h-14 w-14 text-green-500 mx-auto" />
-            <h2 className="text-xl font-bold">Đăng ký thành công!</h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">
-              Tài khoản của bạn đang chờ admin xét duyệt.<br />
-              Chúng tôi sẽ gửi email thông báo khi tài khoản được duyệt.
-            </p>
-            <Link to="/login">
-              <Button variant="outline" className="mt-2 w-full">Quay lại đăng nhập</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="w-full max-w-sm text-center animate-scale-in">
+          <div className="mx-auto mb-5 h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
+            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+          </div>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Gửi yêu cầu thành công!</h2>
+          <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2 leading-relaxed">
+            Tài khoản của bạn đang chờ Admin xét duyệt.<br />
+            Chúng tôi sẽ gửi email thông báo khi được duyệt.
+          </p>
+          <Link to="/login" className="mt-5 inline-block">
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Quay lại đăng nhập
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] px-4 py-8">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Đăng ký tài khoản</CardTitle>
-          <CardDescription>Điền đầy đủ thông tin để gửi yêu cầu tạo tài khoản</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Thông tin đăng nhập */}
-            <div className="space-y-1.5">
-              <Label>Tên đăng nhập *</Label>
-              <Input placeholder="vd: nguyen_van_a" {...register('userName')} />
-              {errors.userName && <p className="text-xs text-red-500">{errors.userName.message}</p>}
+    <div className="min-h-screen flex">
+      {/* Left panel — branding (same as LoginPage) */}
+      <div className="hidden lg:flex lg:w-[38%] gradient-hero flex-col justify-between p-10 relative overflow-hidden">
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/10" />
+        <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-white/5" />
+
+        {/* Logo */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
+            <span className="text-white font-bold text-sm">UMC</span>
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm leading-tight">UMC Electronics</p>
+            <p className="text-white/60 text-xs">Phản hồi người lao động</p>
+          </div>
+        </div>
+
+        {/* Center content */}
+        <div className="relative z-10 space-y-6">
+          <div className="space-y-3">
+            <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center">
+              <UserPlus className="h-6 w-6 text-white" />
             </div>
-
-            <div className="space-y-1.5">
-              <Label>Email *</Label>
-              <Input type="email" placeholder="email@example.com" {...register('email')} />
-              {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Mật khẩu *</Label>
-                <div className="relative">
-                  <Input type={showPw ? 'text' : 'password'} placeholder="••••••" {...register('password')} />
-                  <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]">
-                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Xác nhận mật khẩu *</Label>
-                <div className="relative">
-                  <Input type={showCPw ? 'text' : 'password'} placeholder="••••••" {...register('confirmPassword')} />
-                  <button type="button" onClick={() => setShowCPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]">
-                    {showCPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
-              </div>
-            </div>
-
-            {/* Thông tin cá nhân */}
-            <div className="pt-1 border-t border-[hsl(var(--border))]">
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3 mt-2">Thông tin để admin xét duyệt</p>
-
-              <div className="space-y-1.5">
-                <Label>Họ và tên *</Label>
-                <Input placeholder="Nguyễn Văn A" {...register('fullName')} />
-                {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
-              </div>
-
-              <div className="space-y-1.5 mt-3">
-                <Label>Số điện thoại</Label>
-                <Input placeholder="0901234567" {...register('phone')} />
-              </div>
-
-              <div className="space-y-1.5 mt-3">
-                <Label>Chức vụ</Label>
-                <select className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm" {...register('positionId')}>
-                  <option value="">-- Chọn chức vụ --</option>
-                  {positions.map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2 mt-3">
-                <input type="checkbox" id="isIntern" className="rounded" {...register('isIntern')} />
-                <Label htmlFor="isIntern" className="font-normal cursor-pointer">
-                  Tôi là sinh viên thực tập
-                </Label>
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Đang gửi...' : 'Gửi yêu cầu đăng ký'}
-            </Button>
-
-            <p className="text-center text-sm text-[hsl(var(--muted-foreground))]">
-              Đã có tài khoản?{' '}
-              <Link to="/login" className="text-[hsl(var(--primary))] font-medium hover:underline">
-                Đăng nhập
-              </Link>
+            <h1 className="text-3xl font-bold text-white leading-tight">
+              Tham gia<br />hệ thống
+            </h1>
+            <p className="text-white/75 text-sm leading-relaxed max-w-xs">
+              Đăng ký tài khoản để bắt đầu gửi phản hồi, tham gia khảo sát và kết nối với bộ phận nhân sự.
             </p>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+
+          <div className="space-y-2.5">
+            {[
+              'Gửi phản hồi ẩn danh an toàn',
+              'Tham gia khảo sát nội bộ',
+              'Kiến nghị & khiếu nại minh bạch',
+              'Hỏi đáp trực tiếp với HR',
+            ].map((f) => (
+              <div key={f} className="flex items-center gap-2.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-white/60 shrink-0" />
+                <span className="text-white/80 text-sm">{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-white/40 text-xs">
+          © 2025 UMC Electronics. All rights reserved.
+        </p>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 overflow-y-auto bg-[hsl(var(--background))]">
+        <div className="min-h-full flex items-start justify-center px-6 py-10">
+          <div className="w-full max-w-md animate-slide-up">
+            {/* Mobile logo */}
+            <div className="flex lg:hidden items-center gap-3 mb-8 justify-center">
+              <div className="h-9 w-9 gradient-primary rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-sm">UMC</span>
+              </div>
+              <p className="font-bold text-[hsl(var(--foreground))]">UMC Electronics</p>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">Đăng ký tài khoản</h2>
+              <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">Điền đầy đủ thông tin để gửi yêu cầu tạo tài khoản</p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Account info section */}
+              <div className="space-y-3 p-4 rounded-xl bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--border))]">
+                <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Thông tin đăng nhập</p>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="userName" className="text-xs font-semibold">Tên đăng nhập <span className="text-red-500">*</span></Label>
+                  <Input id="userName" placeholder="vd: nguyen_van_a" autoComplete="username" {...register('userName')} />
+                  {errors.userName && <p className="text-xs text-red-500">{errors.userName.message}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-xs font-semibold">Email <span className="text-red-500">*</span></Label>
+                  <Input id="email" type="email" placeholder="email@example.com" autoComplete="email" {...register('email')} />
+                  {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Mật khẩu <span className="text-red-500">*</span></Label>
+                    <div className="relative">
+                      <Input type={showPw ? 'text' : 'password'} placeholder="••••••" autoComplete="new-password" {...register('password')} />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
+                        aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      >
+                        {showPw ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Xác nhận MK <span className="text-red-500">*</span></Label>
+                    <div className="relative">
+                      <Input type={showCPw ? 'text' : 'password'} placeholder="••••••" autoComplete="new-password" {...register('confirmPassword')} />
+                      <button
+                        type="button"
+                        onClick={() => setShowCPw(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors cursor-pointer"
+                        aria-label={showCPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      >
+                        {showCPw ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal info section */}
+              <div className="space-y-3 p-4 rounded-xl bg-[hsl(var(--secondary)/0.5)] border border-[hsl(var(--border))]">
+                <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Thông tin cá nhân (để Admin xét duyệt)</p>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-xs font-semibold">Họ và tên <span className="text-red-500">*</span></Label>
+                  <Input id="fullName" placeholder="Nguyễn Văn A" {...register('fullName')} />
+                  {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-xs font-semibold">Số điện thoại</Label>
+                    <Input id="phone" placeholder="0901234567" type="tel" {...register('phone')} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="positionId" className="text-xs font-semibold">Chức vụ</Label>
+                    <select
+                      id="positionId"
+                      className="w-full h-9 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] focus:border-[hsl(var(--primary))] transition-all"
+                      {...register('positionId')}
+                    >
+                      <option value="">-- Chọn chức vụ --</option>
+                      {positions.map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-[hsl(var(--border))] accent-[hsl(var(--primary))]"
+                    {...register('isIntern')}
+                  />
+                  <span className="text-sm text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] transition-colors">
+                    Tôi là sinh viên thực tập
+                  </span>
+                </label>
+              </div>
+
+              <Button type="submit" className="w-full gap-2" size="lg" disabled={loading}>
+                {loading ? 'Đang gửi yêu cầu...' : (
+                  <><UserPlus className="h-4 w-4" /><span>Gửi yêu cầu đăng ký</span></>
+                )}
+              </Button>
+
+              <p className="text-center text-sm text-[hsl(var(--muted-foreground))]">
+                Đã có tài khoản?{' '}
+                <Link to="/login" className="text-[hsl(var(--primary))] font-semibold hover:underline">
+                  Đăng nhập ngay
+                </Link>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

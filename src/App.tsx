@@ -4,13 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/layout/ProtectedRoute'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 
 // Auth pages
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'))
 const GoogleCallbackPage = React.lazy(() => import('./pages/auth/GoogleCallbackPage'))
 const RegisterPage = React.lazy(() => import('./pages/auth/RegisterPage'))
 const PendingPage = React.lazy(() => import('./pages/auth/PendingPage'))
-const PendingUsersPage = React.lazy(() => import('./pages/admin/PendingUsersPage'))
 const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage'))
 
 // Common pages
@@ -48,6 +48,7 @@ const AdminRolesPage = React.lazy(() => import('./pages/admin/AdminRolesPage'))
 const AdminDepartmentsPage = React.lazy(() => import('./pages/admin/AdminDepartmentsPage'))
 const AdminPositionsPage = React.lazy(() => import('./pages/admin/AdminPositionsPage'))
 const AdminShiftsPage = React.lazy(() => import('./pages/admin/AdminShiftsPage'))
+const PendingUsersPage = React.lazy(() => import('./pages/admin/PendingUsersPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,79 +65,74 @@ const PageLoader = () => (
   </div>
 )
 
+function AppInner() {
+  const { theme } = useTheme()
+
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/google/callback" element={<GoogleCallbackPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register/pending" element={<PendingPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile/change-password" element={<ChangePasswordPage />} />
+              <Route path="/announcements" element={<AnnouncementsPage />} />
+              <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
+
+              <Route path="/feedback/submit" element={<SubmitFeedbackPage />} />
+              <Route path="/feedback/my" element={<MyFeedbacksPage />} />
+              <Route path="/surveys" element={<SurveysPage />} />
+              <Route path="/surveys/:id/fill" element={<SurveyFillPage />} />
+              <Route path="/proposals" element={<MyProposalsPage />} />
+              <Route path="/proposals/submit" element={<SubmitProposalPage />} />
+              <Route path="/complaints" element={<MyComplaintsPage />} />
+              <Route path="/complaints/submit" element={<SubmitComplaintPage />} />
+              <Route path="/qna" element={<QnaPage />} />
+              <Route path="/evaluation" element={<EvaluationPage />} />
+
+              <Route path="/hr/feedbacks" element={<HrFeedbacksPage />} />
+              <Route path="/hr/surveys" element={<HrSurveysPage />} />
+              <Route path="/hr/surveys/:id/results" element={<HrSurveyResultsPage />} />
+              <Route path="/hr/proposals" element={<HrProposalsPage />} />
+              <Route path="/hr/complaints" element={<HrComplaintsPage />} />
+              <Route path="/hr/announcements" element={<HrAnnouncementsPage />} />
+              <Route path="/hr/qna" element={<HrQnaPage />} />
+              <Route path="/hr/reports" element={<HrReportsPage />} />
+
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/pending-users" element={<PendingUsersPage />} />
+              <Route path="/admin/roles" element={<AdminRolesPage />} />
+              <Route path="/admin/departments" element={<AdminDepartmentsPage />} />
+              <Route path="/admin/positions" element={<AdminPositionsPage />} />
+              <Route path="/admin/shifts" element={<AdminShiftsPage />} />
+            </Route>
+          </Route>
+
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Suspense>
+
+      <Toaster position="top-right" theme={theme} richColors />
+    </BrowserRouter>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/google/callback" element={<GoogleCallbackPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/register/pending" element={<PendingPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                {/* Common */}
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/change-password" element={<ChangePasswordPage />} />
-                <Route path="/announcements" element={<AnnouncementsPage />} />
-                <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
-
-                {/* Employee */}
-                <Route path="/feedback/submit" element={<SubmitFeedbackPage />} />
-                <Route path="/feedback/my" element={<MyFeedbacksPage />} />
-                <Route path="/surveys" element={<SurveysPage />} />
-                <Route path="/surveys/:id/fill" element={<SurveyFillPage />} />
-                <Route path="/proposals" element={<MyProposalsPage />} />
-                <Route path="/proposals/submit" element={<SubmitProposalPage />} />
-                <Route path="/complaints" element={<MyComplaintsPage />} />
-                <Route path="/complaints/submit" element={<SubmitComplaintPage />} />
-                <Route path="/qna" element={<QnaPage />} />
-                <Route path="/evaluation" element={<EvaluationPage />} />
-
-                {/* HR */}
-                <Route path="/hr/feedbacks" element={<HrFeedbacksPage />} />
-                <Route path="/hr/surveys" element={<HrSurveysPage />} />
-                <Route path="/hr/surveys/:id/results" element={<HrSurveyResultsPage />} />
-                <Route path="/hr/proposals" element={<HrProposalsPage />} />
-                <Route path="/hr/complaints" element={<HrComplaintsPage />} />
-                <Route path="/hr/announcements" element={<HrAnnouncementsPage />} />
-                <Route path="/hr/qna" element={<HrQnaPage />} />
-                <Route path="/hr/reports" element={<HrReportsPage />} />
-
-                {/* Admin */}
-                <Route path="/admin/users" element={<AdminUsersPage />} />
-                <Route path="/admin/pending-users" element={<PendingUsersPage />} />
-                <Route path="/admin/roles" element={<AdminRolesPage />} />
-                <Route path="/admin/departments" element={<AdminDepartmentsPage />} />
-                <Route path="/admin/positions" element={<AdminPositionsPage />} />
-                <Route path="/admin/shifts" element={<AdminShiftsPage />} />
-              </Route>
-            </Route>
-
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-
-      <Toaster
-        position="top-right"
-        theme="dark"
-        richColors
-        toastOptions={{
-          style: {
-            background: 'hsl(222 47% 14%)',
-            border: '1px solid hsl(222 40% 22%)',
-            color: 'hsl(213 31% 91%)',
-          },
-        }}
-      />
+      <ThemeProvider>
+        <AppInner />
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

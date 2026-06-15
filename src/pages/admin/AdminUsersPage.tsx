@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/dialog'
 import { usersApi, type CreateUserPayload } from '@/api/users'
 import { rolesApi } from '@/api/roles'
-import { positionsApi } from '@/api/positions'
 import { getInitials } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -44,7 +43,6 @@ interface UserItem {
   fullName?: string
   avatar?: string
   description?: string
-  positionId?: string
   role?: { id: string; roleName: string }
   createdAt?: string
 }
@@ -58,12 +56,9 @@ const AdminUsersPage: React.FC = () => {
 
   const { data, isLoading } = useQuery({ queryKey: ['users'], queryFn: () => usersApi.getAll() })
   const { data: rolesData } = useQuery({ queryKey: ['roles'], queryFn: () => rolesApi.getAll() })
-  const { data: positionsData } = useQuery({ queryKey: ['positions'], queryFn: () => positionsApi.getAll() })
 
   const users: UserItem[] = data?.data?.data ?? data?.data ?? []
   const roles: { id: string; roleName: string }[] = rolesData?.data?.data ?? rolesData?.data ?? []
-  const positions: { id: string; name: string }[] = positionsData?.data?.data ?? positionsData?.data ?? []
-  const positionMap = Object.fromEntries(positions.map((p) => [p.id, p.name]))
   const filtered = users.filter(
     (u) => u.userName.toLowerCase().includes(search.toLowerCase()) ||
            u.email.toLowerCase().includes(search.toLowerCase())
@@ -183,13 +178,11 @@ const AdminUsersPage: React.FC = () => {
                     </p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
                   </div>
-                  {u.positionId && positionMap[u.positionId] && (
-                    <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-medium">
-                      {positionMap[u.positionId]}
-                    </span>
-                  )}
-                  <Badge variant={u.role?.roleName === 'ADMIN' ? 'warning' : 'default'} className="shrink-0">
-                    {u.role?.roleName || 'USER'}
+                  <Badge
+                    variant={u.role?.roleName === 'ADMIN' ? 'warning' : u.role?.roleName === 'HR' ? 'secondary' : 'default'}
+                    className="shrink-0"
+                  >
+                    {u.role?.roleName || 'EMPLOYEE'}
                   </Badge>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button

@@ -8,7 +8,7 @@ import { ensurePasswordHash } from '@/lib/bcrypt/bcrypt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { FilesService } from '@/files/files.service';
 import { EmailService } from '@/email/email.service';
-import { ConflictException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
+import { ConflictException, ForbiddenException, InternalServerException, NotFoundException, ValidationException } from '@/common/exceptions/app.exception';
 import { UserImageType } from '@/users/enums/UserImageType.enum';
 import { IUsersService } from '@/users/interfaces/users.interface';
 import { toUserEntity } from '@/users/helpers/toUserEntity.helper';
@@ -209,7 +209,10 @@ export class UsersService implements IUsersService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, currentUserId: string) {
+    if (id === currentUserId) {
+      throw new ForbiddenException('Không thể xóa tài khoản của chính mình');
+    }
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -218,11 +221,13 @@ export class UsersService implements IUsersService {
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
-      await this.prisma.user.delete({
-        where: { id }
-      });
+      if (user.role?.roleName?.toUpperCase() === 'ADMIN') {
+        throw new ForbiddenException('Không thể xóa tài khoản Admin');
+      }
+      await this.prisma.user.delete({ where: { id } });
       return toUserEntity(user);
     } catch (error: any) {
+      if (error instanceof ForbiddenException || error instanceof NotFoundException) throw error;
       throw new InternalServerException(error.message);
     }
   }

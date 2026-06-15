@@ -6,6 +6,7 @@ import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ValidationException } from '@/common/exceptions/app.exception';
 import { AdminOnly } from '@/common/decorators/metadata';
+import { User } from '@/common/decorators/user.decorator';
 import { UserImageType } from '@/users/enums/UserImageType.enum';
 import { IUsersController } from '@/users/interfaces/users.interface';
 
@@ -98,8 +99,8 @@ export class UsersController implements IUsersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
-  async remove(@Param('id') id: string) {
-    const result = await this.usersService.remove(id);
+  async remove(@Param('id') id: string, @User('id') currentUserId: string) {
+    const result = await this.usersService.remove(id, currentUserId);
     return { statusCode: 200, message: 'User deleted successfully', data: result };
   }
 

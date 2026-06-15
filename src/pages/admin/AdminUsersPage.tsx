@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -172,15 +171,9 @@ const AdminUsersPage: React.FC = () => {
                     <AvatarFallback className="text-xs">{getInitials(u.userName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
-                      {u.fullName || u.userName}
-                      {u.fullName && <span className="text-[hsl(var(--muted-foreground))] font-normal ml-1">({u.userName})</span>}
-                    </p>
+                    <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{u.fullName || u.userName}</p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
                   </div>
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)] shrink-0">
-                    {u.role?.roleName || 'EMPLOYEE'}
-                  </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => { setRoleUser(u); roleForm.setValue('roleNameOrId', u.role?.roleName || '') }}

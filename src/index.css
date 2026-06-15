@@ -2,26 +2,39 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 213 31% 91%;
-    --card: 222 47% 14%;
-    --card-foreground: 213 31% 91%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 222 47% 18%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 222 47% 18%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 221 83% 53%;
-    --accent-foreground: 210 40% 98%;
+    /* === PROFESSIONAL PURPLE LIGHT THEME === */
+    /* Based on design system: Enterprise SaaS Dashboard */
+    /* Primary: #7C3AED | Font: Plus Jakarta Sans */
+
+    --background: 270 60% 98%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    --primary: 263 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 45% 95%;
+    --secondary-foreground: 263 50% 40%;
+
+    --muted: 270 30% 96%;
+    --muted-foreground: 240 5% 50%;
+
+    --accent: 25 95% 53%;
+    --accent-foreground: 0 0% 100%;
+
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 222 40% 22%;
-    --input: 222 40% 22%;
-    --ring: 221 83% 53%;
-    --radius: 0.5rem;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 20% 88%;
+    --input: 270 20% 88%;
+    --ring: 263 83% 58%;
+
+    --radius: 0.75rem;
     --sidebar-width: 260px;
   }
 
@@ -33,13 +46,20 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
   }
 
   html {
     scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -58,44 +78,77 @@
   .text-primary-foreground { color: hsl(var(--primary-foreground)); }
   .text-muted-foreground { color: hsl(var(--muted-foreground)); }
   .text-destructive { color: hsl(var(--destructive)); }
+  .text-accent { color: hsl(var(--accent)); }
 
   .border-border { border-color: hsl(var(--border)); }
   .border-input { border-color: hsl(var(--input)); }
 
   .ring-ring { --tw-ring-color: hsl(var(--ring)); }
 
+  /* Glass card — optimized for light mode */
   .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(124, 58, 237, 0.12);
   }
 
+  /* Primary gradient: deep purple → medium purple */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(221 83% 53%), hsl(261 83% 58%));
+    background: linear-gradient(135deg, hsl(263 83% 52%), hsl(258 90% 68%));
   }
 
+  /* Card gradient: subtle lavender tint */
   .gradient-card {
-    background: linear-gradient(145deg, hsl(222 47% 16%), hsl(222 47% 12%));
+    background: linear-gradient(145deg, hsl(270 60% 99.5%), hsl(270 40% 97%));
+  }
+
+  /* Purple hero gradient for auth / landing */
+  .gradient-hero {
+    background: linear-gradient(135deg, hsl(263 83% 55%) 0%, hsl(255 85% 65%) 50%, hsl(25 95% 58%) 100%);
   }
 
   .sidebar-transition {
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: transform 0.25s ease, opacity 0.25s ease;
   }
 
+  /* Purple glow */
   .glow-primary {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 24px rgba(124, 58, 237, 0.2);
+  }
+
+  /* Orange accent glow for CTAs */
+  .glow-accent {
+    box-shadow: 0 0 24px rgba(249, 115, 22, 0.25);
+  }
+
+  /* Elevated card shadow */
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(124, 58, 237, 0.06);
+  }
+
+  .shadow-card-hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(124, 58, 237, 0.1);
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.35s ease-out;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.4s ease-out;
+    animation: slideUp 0.35s ease-out;
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.3s ease-out;
+    animation: scaleIn 0.25s ease-out;
+  }
+
+  /* KPI stat card accent bar */
+  .stat-bar-primary {
+    border-left: 3px solid hsl(var(--primary));
+  }
+
+  .stat-bar-accent {
+    border-left: 3px solid hsl(var(--accent));
   }
 }
 
@@ -105,35 +158,25 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb { background: hsl(270 20% 82%); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.5); }
 
-/* OTP Input */
+/* === OTP INPUT === */
 .otp-input {
-  width: 48px;
-  height: 56px;
+  width: 52px;
+  height: 60px;
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
@@ -146,8 +189,27 @@
 }
 .otp-input:focus {
   border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 .otp-input:not(:placeholder-shown) {
   border-color: hsl(var(--primary));
+  background: hsl(270 50% 97%);
+}
+
+/* === FOCUS STATES (Accessibility) === */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none;
+  }
+  .sidebar-transition {
+    transition: none;
+  }
 }

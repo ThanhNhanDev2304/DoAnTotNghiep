@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Search, X, Check, CheckCheck, Megaphone, ClipboardList, MessageSquare, FileText, AlertCircle, Send } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials, getApiErrorMessage } from '@/lib/utils'
 import { notificationsApi, type Notification } from '@/api/notifications'
 import { searchApi, type SearchResults } from '@/api/search'
@@ -315,7 +315,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="h-16 flex items-center justify-between px-6 border-b border-[hsl(var(--border))] bg-[hsl(var(--card)/0.8)] backdrop-blur-sm sticky top-0 z-20">
+      <header className="h-16 flex items-center justify-between px-6 border-b border-[hsl(var(--border))] bg-white/90 backdrop-blur-md sticky top-0 z-20 shadow-sm">
         <div>
           <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">{title}</h1>
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -342,7 +342,7 @@ const Header: React.FC = () => {
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 rounded-full bg-[hsl(var(--primary))] text-white text-[10px] font-bold flex items-center justify-center px-1 shadow-sm">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -356,7 +356,8 @@ const Header: React.FC = () => {
             className="h-8 w-8 cursor-pointer ring-2 ring-[hsl(var(--primary)/0.3)] hover:ring-[hsl(var(--primary))] transition-all"
             onClick={() => navigate('/profile')}
           >
-            <AvatarFallback className="text-xs">{getInitials(user?.userName || 'U')}</AvatarFallback>
+            <AvatarImage src={user?.avatar} />
+            <AvatarFallback className="text-xs bg-[hsl(var(--primary))] text-white font-bold">{getInitials(user?.userName || 'U')}</AvatarFallback>
           </Avatar>
         </div>
       </header>

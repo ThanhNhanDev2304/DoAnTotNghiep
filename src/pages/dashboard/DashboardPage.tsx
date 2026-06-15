@@ -24,22 +24,22 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon: Icon, color, to }) => {
   const content = (
-    <Card className="hover:shadow-xl transition-shadow duration-300">
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">{title}</p>
-            <p className="text-3xl font-bold text-[hsl(var(--foreground))] mt-1">{value}</p>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{description}</p>
+    <Card className="hover:shadow-card-hover transition-all duration-200 cursor-pointer border-l-4 border-l-transparent hover:border-l-[hsl(var(--primary))] group">
+      <CardContent className="pt-5 pb-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{title}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--foreground))] mt-1 leading-tight">{value}</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{description}</p>
           </div>
-          <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${color}`}>
-            <Icon className="h-6 w-6" />
+          <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${color}`}>
+            <Icon className="h-5 w-5" />
           </div>
         </div>
       </CardContent>
     </Card>
   )
-  return to ? <Link to={to}>{content}</Link> : content
+  return to ? <Link to={to} className="block">{content}</Link> : content
 }
 
 const EmployeeDashboard: React.FC = () => {
@@ -52,10 +52,10 @@ const EmployeeDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Phản hồi đã gửi" value={stats.myFeedbacks ?? 0} description="Tổng phản hồi" icon={MessageSquare} color="bg-blue-500/15 text-blue-400" to="/feedback/my" />
-        <StatCard title="Khảo sát đã điền" value={stats.mySurveys ?? 0} description="Khảo sát hoàn thành" icon={ClipboardList} color="bg-purple-500/15 text-purple-400" to="/surveys" />
-        <StatCard title="Kiến nghị" value={stats.myProposals ?? 0} description="Đã gửi" icon={Star} color="bg-green-500/15 text-green-400" to="/proposals" />
-        <StatCard title="Khiếu nại" value={stats.myComplaints ?? 0} description="Đã gửi" icon={AlertTriangle} color="bg-orange-500/15 text-orange-400" to="/complaints" />
+        <StatCard title="Phản hồi đã gửi" value={stats.myFeedbacks ?? 0} description="Tổng phản hồi" icon={MessageSquare} color="bg-blue-100 text-blue-600" to="/feedback/my" />
+        <StatCard title="Khảo sát đã điền" value={stats.mySurveys ?? 0} description="Khảo sát hoàn thành" icon={ClipboardList} color="bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]" to="/surveys" />
+        <StatCard title="Kiến nghị" value={stats.myProposals ?? 0} description="Đã gửi" icon={Star} color="bg-emerald-100 text-emerald-600" to="/proposals" />
+        <StatCard title="Khiếu nại" value={stats.myComplaints ?? 0} description="Đã gửi" icon={AlertTriangle} color="bg-orange-100 text-orange-600" to="/complaints" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -64,7 +64,7 @@ const EmployeeDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-yellow-400" />
+                <ClipboardList className="h-4 w-4 text-amber-500" />
                 Khảo sát chờ bạn điền ({pendingSurveys.length})
               </CardTitle>
             </CardHeader>
@@ -86,7 +86,7 @@ const EmployeeDashboard: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Bell className="h-4 w-4 text-blue-400" /> Thông báo mới nhất
+                <Bell className="h-4 w-4 text-[hsl(var(--primary))]" /> Thông báo mới nhất
               </CardTitle>
               <Link to="/announcements" className="text-xs text-[hsl(var(--primary))] hover:underline">Xem tất cả</Link>
             </div>
@@ -113,10 +113,10 @@ const EmployeeDashboard: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { to: '/feedback/submit', icon: MessageSquare, label: 'Gửi phản hồi', color: 'text-blue-400' },
-              { to: '/proposals/submit', icon: Star, label: 'Kiến nghị mới', color: 'text-green-400' },
-              { to: '/complaints/submit', icon: AlertTriangle, label: 'Gửi khiếu nại', color: 'text-orange-400' },
-              { to: '/evaluation', icon: BarChart3, label: 'Đánh giá tháng này', color: 'text-purple-400' },
+              { to: '/feedback/submit', icon: MessageSquare, label: 'Gửi phản hồi', color: 'text-blue-600' },
+              { to: '/proposals/submit', icon: Star, label: 'Kiến nghị mới', color: 'text-emerald-600' },
+              { to: '/complaints/submit', icon: AlertTriangle, label: 'Gửi khiếu nại', color: 'text-orange-600' },
+              { to: '/evaluation', icon: BarChart3, label: 'Đánh giá tháng này', color: 'text-[hsl(var(--primary))]' },
             ].map((a) => (
               <Link key={a.to} to={a.to}>
                 <div className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--primary)/0.05)] transition-all cursor-pointer">
@@ -142,24 +142,24 @@ const HrDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Tổng nhân viên" value={stats.totalEmployees ?? 0} description="Người lao động" icon={Users} color="bg-blue-500/15 text-blue-400" to="/admin/users" />
-        <StatCard title="Phản hồi" value={stats.totalFeedbacks ?? 0} description={`Chờ xử lý: ${pending.feedbacks ?? 0}`} icon={MessageSquare} color="bg-yellow-500/15 text-yellow-400" to="/hr/feedbacks" />
-        <StatCard title="Kiến nghị" value={stats.totalProposals ?? 0} description={`Chờ xử lý: ${pending.proposals ?? 0}`} icon={Star} color="bg-green-500/15 text-green-400" to="/hr/proposals" />
-        <StatCard title="Khiếu nại" value={stats.totalComplaints ?? 0} description={`Chờ xử lý: ${pending.complaints ?? 0}`} icon={AlertTriangle} color="bg-red-500/15 text-red-400" to="/hr/complaints" />
+        <StatCard title="Tổng nhân viên" value={stats.totalEmployees ?? 0} description="Người lao động" icon={Users} color="bg-blue-100 text-blue-600" to="/admin/users" />
+        <StatCard title="Phản hồi" value={stats.totalFeedbacks ?? 0} description={`Chờ xử lý: ${pending.feedbacks ?? 0}`} icon={MessageSquare} color="bg-amber-100 text-amber-600" to="/hr/feedbacks" />
+        <StatCard title="Kiến nghị" value={stats.totalProposals ?? 0} description={`Chờ xử lý: ${pending.proposals ?? 0}`} icon={Star} color="bg-emerald-100 text-emerald-600" to="/hr/proposals" />
+        <StatCard title="Khiếu nại" value={stats.totalComplaints ?? 0} description={`Chờ xử lý: ${pending.complaints ?? 0}`} icon={AlertTriangle} color="bg-red-100 text-red-600" to="/hr/complaints" />
       </div>
 
       {/* Pending alerts */}
       {(pending.feedbacks > 0 || pending.proposals > 0 || pending.complaints > 0) && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5">
+        <Card className="border-amber-200 bg-amber-50">
           <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-2 text-yellow-400 mb-2">
+            <div className="flex items-center gap-2 text-amber-700 mb-2">
               <Bell className="h-4 w-4" />
-              <span className="font-medium text-sm">Cần xử lý</span>
+              <span className="font-semibold text-sm">Cần xử lý hôm nay</span>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {pending.feedbacks > 0 && <Link to="/hr/feedbacks" className="text-xs px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20">{pending.feedbacks} phản hồi chờ</Link>}
-              {pending.proposals > 0 && <Link to="/hr/proposals" className="text-xs px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20">{pending.proposals} kiến nghị chờ</Link>}
-              {pending.complaints > 0 && <Link to="/hr/complaints" className="text-xs px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20">{pending.complaints} khiếu nại chờ</Link>}
+            <div className="flex flex-wrap gap-2">
+              {pending.feedbacks > 0 && <Link to="/hr/feedbacks" className="text-xs px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors font-medium">{pending.feedbacks} phản hồi chờ</Link>}
+              {pending.proposals > 0 && <Link to="/hr/proposals" className="text-xs px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors font-medium">{pending.proposals} kiến nghị chờ</Link>}
+              {pending.complaints > 0 && <Link to="/hr/complaints" className="text-xs px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors font-medium">{pending.complaints} khiếu nại chờ</Link>}
             </div>
           </CardContent>
         </Card>

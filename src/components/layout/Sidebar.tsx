@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Shield, User, LogOut, ChevronRight,
+  LayoutDashboard, Users, Shield, User, LogOut,
   MessageSquare, ClipboardList, Megaphone, Star, HelpCircle,
   Building2, Briefcase, Clock, BarChart3, FileText, AlertTriangle,
-  Settings, UserCheck, Send,
+  UserCheck, Send,
 } from 'lucide-react'
 import { cn, getInitials, getApiErrorMessage } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
@@ -55,14 +55,11 @@ const adminItems: NavItem[] = [
   { to: '/admin/roles', icon: Shield, label: 'Phân quyền' },
 ]
 
-interface NavSectionProps {
-  title: string
-  items: NavItem[]
-}
+interface NavSectionProps { title: string; items: NavItem[] }
 
 const NavSection: React.FC<NavSectionProps> = ({ title, items }) => (
-  <>
-    <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider px-3 mt-5 mb-2">
+  <div className="mb-1">
+    <p className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-widest px-3 mt-5 mb-1.5">
       {title}
     </p>
     {items.map(({ to, icon: Icon, label }) => (
@@ -71,19 +68,29 @@ const NavSection: React.FC<NavSectionProps> = ({ title, items }) => (
         to={to}
         className={({ isActive }) =>
           cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
+            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer group',
             isActive
-              ? 'bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]'
+              ? 'bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] font-semibold'
               : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))]'
           )
         }
       >
-        <Icon className="h-4 w-4 shrink-0" />
-        <span className="flex-1">{label}</span>
-        <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {({ isActive }) => (
+          <>
+            <span className={cn(
+              'flex h-7 w-7 items-center justify-center rounded-md transition-all duration-200 flex-shrink-0',
+              isActive
+                ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
+                : 'bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary)/0.1)] group-hover:text-[hsl(var(--primary))]'
+            )}>
+              <Icon className="h-3.5 w-3.5" />
+            </span>
+            <span className="flex-1 truncate text-[13px]">{label}</span>
+          </>
+        )}
       </NavLink>
     ))}
-  </>
+  </div>
 )
 
 const Sidebar: React.FC = () => {
@@ -122,46 +129,34 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 h-screen w-[var(--sidebar-width)] flex flex-col border-r border-[hsl(var(--border))] bg-[hsl(var(--card))] z-30 sidebar-transition">
+      <aside className="fixed left-0 top-0 h-screen w-[var(--sidebar-width)] flex flex-col bg-white border-r border-[hsl(var(--border))] z-30 sidebar-transition">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-[hsl(var(--border))]">
-          <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center shadow-md">
-            <span className="text-white font-bold text-sm">UMC</span>
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[hsl(var(--border))]">
+          <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm flex-shrink-0">
+            <span className="text-white font-bold text-sm tracking-tight">UMC</span>
           </div>
-          <div>
-            <p className="font-bold text-[hsl(var(--foreground))] text-sm">UMC Electronics</p>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Hệ thống phản hồi NLĐ</p>
+          <div className="min-w-0">
+            <p className="font-bold text-[hsl(var(--foreground))] text-sm leading-tight truncate">UMC Electronics</p>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate font-medium">Phản hồi người lao động</p>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-2 py-3">
           <NavSection title="Menu chính" items={commonItems} />
-
-          {/* Employee section */}
-          {(isEmployee || isAdmin) && (
-            <NavSection title="Người lao động" items={employeeItems} />
-          )}
-
-          {/* HR section */}
-          {(isHR || isAdmin) && (
-            <NavSection title="Nhân sự (HR)" items={hrItems} />
-          )}
-
-          {/* Admin section */}
-          {isAdmin && (
-            <NavSection title="Quản trị hệ thống" items={adminItems} />
-          )}
+          {(isEmployee || isAdmin) && <NavSection title="Người lao động" items={employeeItems} />}
+          {(isHR || isAdmin) && <NavSection title="Nhân sự (HR)" items={hrItems} />}
+          {isAdmin && <NavSection title="Quản trị hệ thống" items={adminItems} />}
         </nav>
 
-        {/* Gửi thông báo HR — chỉ hiện với EMPLOYEE */}
+        {/* Send to HR — employee only */}
         {isEmployee && (
           <div className="px-3 pb-2">
             <button
               onClick={() => setSendOpen(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--foreground))] transition-all duration-200 border border-dashed border-[hsl(var(--border))]"
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] transition-all duration-200 border border-dashed border-[hsl(var(--primary)/0.3)] cursor-pointer"
             >
-              <Send className="h-4 w-4 shrink-0" />
+              <Send className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="flex-1 text-left">Gửi thông báo cho HR</span>
             </button>
           </div>
@@ -169,23 +164,26 @@ const Sidebar: React.FC = () => {
 
         {/* User footer */}
         <div className="p-3 border-t border-[hsl(var(--border))]">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--secondary))]">
-            <Avatar className="h-8 w-8">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[hsl(var(--secondary))]">
+            <Avatar className="h-8 w-8 flex-shrink-0">
               <AvatarImage src={user?.avatar} />
-              <AvatarFallback className="text-xs">{getInitials(user?.userName || 'U')}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-[hsl(var(--primary))] text-white font-bold">
+                {getInitials(user?.userName || 'U')}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+              <p className="text-[13px] font-semibold text-[hsl(var(--foreground))] truncate leading-tight">
                 {user?.fullName || user?.userName}
               </p>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{role}</p>
+              <p className="text-[11px] text-[hsl(var(--primary))] truncate font-medium">{role}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors p-1 rounded"
+              className="text-[hsl(var(--muted-foreground))] hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
               title="Đăng xuất"
+              aria-label="Đăng xuất"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -195,13 +193,16 @@ const Sidebar: React.FC = () => {
       <Dialog open={sendOpen} onOpenChange={(v) => { setSendOpen(v); if (!v) setForm({ title: '', body: '' }) }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Send className="h-4 w-4 text-indigo-500" /> Gửi thông báo đến HR
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <span className="h-7 w-7 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center">
+                <Send className="h-3.5 w-3.5 text-[hsl(var(--primary))]" />
+              </span>
+              Gửi thông báo đến HR
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-1">
             <div className="space-y-1.5">
-              <Label>Tiêu đề *</Label>
+              <Label className="text-xs font-semibold">Tiêu đề <span className="text-red-500">*</span></Label>
               <Input
                 placeholder="VD: Yêu cầu xác nhận tăng ca"
                 value={form.title}
@@ -209,26 +210,19 @@ const Sidebar: React.FC = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Nội dung *</Label>
+              <Label className="text-xs font-semibold">Nội dung <span className="text-red-500">*</span></Label>
               <textarea
-                className="w-full min-h-24 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                className="w-full min-h-[96px] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.25)] focus:border-[hsl(var(--primary))] transition-all"
                 placeholder="Mô tả chi tiết yêu cầu của bạn..."
                 value={form.body}
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
               />
+              <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Sẽ gửi đến tất cả HR và Admin trong hệ thống.</p>
             </div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">
-              Thông báo sẽ được gửi đến tất cả HR và Admin.
-            </p>
           </div>
-          <DialogFooter>
-            <button
-              onClick={() => setSendOpen(false)}
-              className="px-4 py-2 text-sm rounded-md border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] transition-colors"
-            >
-              Hủy
-            </button>
-            <Button onClick={handleSend} disabled={sendMutation.isPending} className="gap-2">
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSendOpen(false)}>Hủy</Button>
+            <Button size="sm" onClick={handleSend} disabled={sendMutation.isPending} className="gap-1.5">
               <Send className="h-3.5 w-3.5" />
               {sendMutation.isPending ? 'Đang gửi...' : 'Gửi thông báo'}
             </Button>

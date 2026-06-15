@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ChatHistoryItemDto } from './dto/chat.dto';
 
 @Injectable()
 export class ChatbotService {
-  private readonly client: Anthropic;
+  private readonly client: Groq;
   private readonly model: string;
   private readonly logger = new Logger(ChatbotService.name);
 
@@ -14,10 +14,10 @@ export class ChatbotService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    const apiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is required');
-    this.client = new Anthropic({ apiKey });
-    this.model = this.configService.get<string>('ANTHROPIC_MODEL') || 'claude-haiku-4-5-20251001';
+    const apiKey = this.configService.get<string>('GROQ_API_KEY');
+    if (!apiKey) throw new Error('GROQ_API_KEY is required');
+    this.client = new Groq({ apiKey });
+    this.model = this.configService.get<string>('GROQ_MODEL') || 'llama-3.3-70b-versatile';
   }
 
   async chat(message: string, history: ChatHistoryItemDto[] = []): Promise<string> {
@@ -62,25 +62,19 @@ ${qnaCtx}
 - Ưu tiên dùng thông tin trên để trả lời chính xác
 - Nếu không có thông tin liên quan, hướng dẫn nhân viên liên hệ HR trực tiếp hoặc gửi câu hỏi qua mục Hỏi đáp
 - Giữ câu trả lời ngắn gọn, rõ ràng (tối đa 250 từ)
-- Không bịa đặt thông tin không có trong dữ liệu
-- Khi cần thiết có thể dùng danh sách gạch đầu dòng cho rõ ràng`;
+- Không bịa đặt thông tin không có trong dữ liệu`;
 
-      const messages: Anthropic.MessageParam[] = [
-        ...history.map((h) => ({
-          role: h.role,
-          content: h.content,
-        })),
-        { role: 'user', content: message },
-      ];
-
-      const response = await this.client.messages.create({
+      const response = await this.client.chat.completions.create({
         model: this.model,
         max_tokens: 1024,
-        system: systemPrompt,
-        messages,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+          { role: 'user', content: message },
+        ],
       });
 
-      return (response.content[0] as Anthropic.TextBlock).text;
+      return response.choices[0]?.message?.content ?? 'Không có phản hồi từ AI.';
     } catch (e: any) {
       this.logger.error(`Chatbot error: ${e.message}`);
       return 'Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau hoặc liên hệ HR trực tiếp.';

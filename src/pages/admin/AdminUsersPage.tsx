@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Pencil, Trash2, Search, Users, Shield } from 'lucide-react'
+import { Plus, Pencil, Search, Users, Shield } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/dialog'
 import { usersApi, type CreateUserPayload } from '@/api/users'
 import { rolesApi } from '@/api/roles'
+import { positionsApi } from '@/api/positions'
 import { getInitials } from '@/lib/utils'
-import { useAuthStore } from '@/store/authStore'
 import { toast } from 'sonner'
 
 const createSchema = z.object({
@@ -41,26 +41,29 @@ interface UserItem {
   id: string
   userName: string
   email: string
+  fullName?: string
   avatar?: string
   description?: string
+  positionId?: string
   role?: { id: string; roleName: string }
   createdAt?: string
 }
 
 const AdminUsersPage: React.FC = () => {
-  const { user: currentUser } = useAuthStore()
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
-  const [deleteUser, setDeleteUser] = useState<UserItem | null>(null)
   const [roleUser, setRoleUser] = useState<UserItem | null>(null)
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery({ queryKey: ['users'], queryFn: () => usersApi.getAll() })
   const { data: rolesData } = useQuery({ queryKey: ['roles'], queryFn: () => rolesApi.getAll() })
+  const { data: positionsData } = useQuery({ queryKey: ['positions'], queryFn: () => positionsApi.getAll() })
 
   const users: UserItem[] = data?.data?.data ?? data?.data ?? []
   const roles: { id: string; roleName: string }[] = rolesData?.data?.data ?? rolesData?.data ?? []
+  const positions: { id: string; name: string }[] = positionsData?.data?.data ?? positionsData?.data ?? []
+  const positionMap = Object.fromEntries(positions.map((p) => [p.id, p.name]))
   const filtered = users.filter(
     (u) => u.userName.toLowerCase().includes(search.toLowerCase()) ||
            u.email.toLowerCase().includes(search.toLowerCase())
@@ -80,12 +83,6 @@ const AdminUsersPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: EditData }) => usersApi.update(id, { description: data.description, userName: data.userName, email: data.email }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success('Cập nhật thành công!'); setEditUser(null) },
     onError: (err: unknown) => { const e = err as { response?: { data?: { message?: string } } }; toast.error(e?.response?.data?.message || 'Cập nhật thất bại.') },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => usersApi.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success('Xóa user thành công!'); setDeleteUser(null) },
-    onError: (err: unknown) => { const e = err as { response?: { data?: { message?: string } } }; toast.error(e?.response?.data?.message || 'Xóa thất bại.') },
   })
 
   const roleMutation = useMutation({
@@ -180,8 +177,16 @@ const AdminUsersPage: React.FC = () => {
                     <AvatarFallback className="text-xs">{getInitials(u.userName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{u.userName}</p>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{u.email}</p>
+                    <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+                      {u.fullName || u.userName}
+                      {u.fullName && <span className="text-[hsl(var(--muted-foreground))] font-normal ml-1">({u.userName})</span>}
+                    </p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
+                      {u.email}
+                      {u.positionId && positionMap[u.positionId] && (
+                        <span className="ml-2 text-[hsl(var(--primary))]">· {positionMap[u.positionId]}</span>
+                      )}
+                    </p>
                   </div>
                   <Badge variant={u.role?.roleName === 'ADMIN' ? 'warning' : 'default'} className="shrink-0">
                     {u.role?.roleName || 'USER'}
@@ -197,13 +202,6 @@ const AdminUsersPage: React.FC = () => {
                       className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors"
                       title="Chỉnh sửa"
                     ><Pencil className="h-3.5 w-3.5" /></button>
-                    {u.id !== currentUser?.id && u.role?.roleName?.toUpperCase() !== 'ADMIN' && u.role?.roleName?.toUpperCase() !== 'EMPLOYEE' && (
-                      <button
-                        onClick={() => setDeleteUser(u)}
-                        className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
-                        title="Xóa"
-                      ><Trash2 className="h-3.5 w-3.5" /></button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -263,23 +261,6 @@ const AdminUsersPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
-      <Dialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc muốn xóa user <strong className="text-[hsl(var(--foreground))]">{deleteUser?.userName}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteUser(null)}>Hủy</Button>
-            <Button variant="destructive" loading={deleteMutation.isPending} onClick={() => deleteUser && deleteMutation.mutate(deleteUser.id)}>
-              Xóa User
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

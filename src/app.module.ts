@@ -25,6 +25,7 @@ import { QnaModule } from '@/qna/qna.module';
 import { DashboardModule } from '@/dashboard/dashboard.module';
 import { NotificationModule } from '@/notification/notification.module';
 import { SearchModule } from '@/search/search.module';
+import { ChatbotModule } from '@/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { SearchModule } from '@/search/search.module';
     DashboardModule,
     NotificationModule,
     SearchModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
